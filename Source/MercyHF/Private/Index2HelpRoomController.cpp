@@ -1,13 +1,11 @@
 #include "Index2HelpRoomController.h"
 
 #include "Components/BoxComponent.h"
-#include "Components/LightComponent.h"
 #include "Components/SceneComponent.h"
-#include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercyDoorController.h"
-#include "MercySystemTextActor.h"
+#include "MercyHelpers.h"
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
 
@@ -36,8 +34,7 @@ void AIndex2HelpRoomController::BeginPlay()
 		TrapTrigger->OnComponentBeginOverlap.AddDynamic(this, &AIndex2HelpRoomController::HandleTrapBeginOverlap);
 	}
 
-	SetActorsHiddenByTag(SilentExitTag, true);
-	SetActorsCollisionByTag(SilentExitTag, false);
+	UMercyHelpers::SetActorsHiddenByTag(this, SilentExitTag, true);
 
 	DebugMessage(TEXT("Index2 Help Room Controller ready"), FColor::Cyan, 3.0f);
 }
@@ -51,7 +48,7 @@ void AIndex2HelpRoomController::HandleTrapBeginOverlap(
 	const FHitResult& SweepResult
 )
 {
-	if (!IsValidPlayerActor(OtherActor))
+	if (!UMercyHelpers::IsValidPlayerActor(OtherActor))
 	{
 		return;
 	}
@@ -70,11 +67,11 @@ void AIndex2HelpRoomController::StartHelpTrap()
 
 	CloseHelpRoomDoors();
 
-	SetLightIntensityByTag(MainLightTag, 0.0f);
-	SetLightIntensityByTag(RedLightTag, 700.0f);
+	UMercyHelpers::SetLightIntensityByTag(this, MainLightTag, 0.0f);
+	UMercyHelpers::SetLightIntensityByTag(this, RedLightTag, 700.0f);
 
-	PlaySound2DIfValid(TrapCloseSound);
-	PlaySound2DIfValid(HelpVoiceSound);
+	UMercyHelpers::PlaySound2DIfValid(this, TrapCloseSound);
+	UMercyHelpers::PlaySound2DIfValid(this, HelpVoiceSound);
 
 	GetWorldTimerManager().SetTimer(
 		FirstMessageTimerHandle,
@@ -115,8 +112,7 @@ void AIndex2HelpRoomController::ShowSecondMessage()
 
 void AIndex2HelpRoomController::RevealSilentExit()
 {
-	SetActorsHiddenByTag(SilentExitTag, false);
-	SetActorsCollisionByTag(SilentExitTag, true);
+	UMercyHelpers::SetActorsHiddenByTag(this, SilentExitTag, false);
 
 	ShowSystemText(TEXT("SILENCE IS THE ONLY EXIT"), 6.0f);
 
@@ -142,21 +138,7 @@ void AIndex2HelpRoomController::CloseHelpRoomDoors()
 
 void AIndex2HelpRoomController::SetActorsHiddenByTag(FName Tag, bool bShouldHide)
 {
-	if (Tag.IsNone())
-	{
-		return;
-	}
-
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), Tag, FoundActors);
-
-	for (AActor* Actor : FoundActors)
-	{
-		if (Actor)
-		{
-			Actor->SetActorHiddenInGame(bShouldHide);
-		}
-	}
+	UMercyHelpers::SetActorsHiddenByTag(this, Tag, bShouldHide);
 }
 
 void AIndex2HelpRoomController::SetActorsCollisionByTag(FName Tag, bool bEnableCollision)
@@ -180,78 +162,25 @@ void AIndex2HelpRoomController::SetActorsCollisionByTag(FName Tag, bool bEnableC
 
 void AIndex2HelpRoomController::SetLightIntensityByTag(FName Tag, float NewIntensity)
 {
-	if (Tag.IsNone())
-	{
-		return;
-	}
-
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), Tag, FoundActors);
-
-	for (AActor* Actor : FoundActors)
-	{
-		if (!Actor)
-		{
-			continue;
-		}
-
-		ULightComponent* LightComponent = Actor->FindComponentByClass<ULightComponent>();
-
-		if (LightComponent)
-		{
-			LightComponent->SetIntensity(NewIntensity);
-		}
-	}
+	UMercyHelpers::SetLightIntensityByTag(this, Tag, NewIntensity);
 }
 
 void AIndex2HelpRoomController::ShowSystemText(const FString& Message, float AutoHideAfter)
 {
-	TArray<AActor*> TextActors;
-
-	if (!SystemTextTag.IsNone())
-	{
-		UGameplayStatics::GetAllActorsWithTag(GetWorld(), SystemTextTag, TextActors);
-	}
-	else
-	{
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMercySystemTextActor::StaticClass(), TextActors);
-	}
-
-	for (AActor* Actor : TextActors)
-	{
-		AMercySystemTextActor* TextActor = Cast<AMercySystemTextActor>(Actor);
-
-		if (TextActor)
-		{
-			TextActor->ShowTypewriterMessage(Message, TypewriterInterval, AutoHideAfter);
-		}
-	}
+	UMercyHelpers::ShowSystemTextByTag(this, SystemTextTag, Message, TypewriterInterval, AutoHideAfter);
 }
 
 void AIndex2HelpRoomController::PlaySound2DIfValid(USoundBase* Sound)
 {
-	if (Sound)
-	{
-		UGameplayStatics::PlaySound2D(this, Sound);
-	}
+	UMercyHelpers::PlaySound2DIfValid(this, Sound);
 }
 
 bool AIndex2HelpRoomController::IsValidPlayerActor(AActor* OtherActor) const
 {
-	if (!OtherActor)
-	{
-		return false;
-	}
-
-	return OtherActor->IsA<APawn>() || OtherActor->ActorHasTag(TEXT("Player"));
+	return UMercyHelpers::IsValidPlayerActor(OtherActor);
 }
 
 void AIndex2HelpRoomController::DebugMessage(const FString& Message, const FColor& Color, float Duration) const
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
-
-	if (bShowDebugMessages && GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, Duration, Color, Message);
-	}
+	UMercyHelpers::DebugMessage(bShowDebugMessages, Message, Color, Duration);
 }

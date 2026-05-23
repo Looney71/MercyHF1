@@ -1,9 +1,7 @@
 #include "Index1MercyCellController.h"
 
-#include "Components/LightComponent.h"
 #include "Engine/Engine.h"
-#include "Kismet/GameplayStatics.h"
-#include "MercySystemTextActor.h"
+#include "MercyHelpers.h"
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
 
@@ -19,8 +17,8 @@ void AIndex1MercyCellController::BeginPlay()
 
 	BuildDefaultMessages();
 
-	SetActorsHiddenByTag(ExitActorsTag, true);
-	SetLightIntensityByTag(ObservationLightTag, 350.0f);
+	UMercyHelpers::SetActorsHiddenByTag(this, ExitActorsTag, true);
+	UMercyHelpers::SetLightIntensityByTag(this, ObservationLightTag, 350.0f);
 
 	if (bAutoStart)
 	{
@@ -87,8 +85,8 @@ void AIndex1MercyCellController::RevealExit()
 {
 	GetWorldTimerManager().ClearTimer(MessageTimerHandle);
 
-	SetActorsHiddenByTag(ExitActorsTag, false);
-	SetLightIntensityByTag(ObservationLightTag, 900.0f);
+	UMercyHelpers::SetActorsHiddenByTag(this, ExitActorsTag, false);
+	UMercyHelpers::SetLightIntensityByTag(this, ObservationLightTag, 900.0f);
 
 	PlaySound2DIfValid(ExitRevealSound);
 	ShowSystemText(TEXT("ACCESS CONFIRMED"), 5.0f);
@@ -98,88 +96,25 @@ void AIndex1MercyCellController::RevealExit()
 
 void AIndex1MercyCellController::ShowSystemText(const FString& Message, float AutoHideAfter)
 {
-	TArray<AActor*> TextActors;
-
-	if (!SystemTextTag.IsNone())
-	{
-		UGameplayStatics::GetAllActorsWithTag(GetWorld(), SystemTextTag, TextActors);
-	}
-	else
-	{
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMercySystemTextActor::StaticClass(), TextActors);
-	}
-
-	for (AActor* Actor : TextActors)
-	{
-		AMercySystemTextActor* TextActor = Cast<AMercySystemTextActor>(Actor);
-
-		if (TextActor)
-		{
-			TextActor->ShowTypewriterMessage(Message, TypewriterInterval, AutoHideAfter);
-		}
-	}
+	UMercyHelpers::ShowSystemTextByTag(this, SystemTextTag, Message, TypewriterInterval, AutoHideAfter);
 }
 
 void AIndex1MercyCellController::SetActorsHiddenByTag(FName Tag, bool bShouldHide)
 {
-	if (Tag.IsNone())
-	{
-		return;
-	}
-
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), Tag, FoundActors);
-
-	for (AActor* Actor : FoundActors)
-	{
-		if (Actor)
-		{
-			Actor->SetActorHiddenInGame(bShouldHide);
-			Actor->SetActorEnableCollision(!bShouldHide);
-		}
-	}
+	UMercyHelpers::SetActorsHiddenByTag(this, Tag, bShouldHide);
 }
 
 void AIndex1MercyCellController::SetLightIntensityByTag(FName Tag, float NewIntensity)
 {
-	if (Tag.IsNone())
-	{
-		return;
-	}
-
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), Tag, FoundActors);
-
-	for (AActor* Actor : FoundActors)
-	{
-		if (!Actor)
-		{
-			continue;
-		}
-
-		ULightComponent* LightComponent = Actor->FindComponentByClass<ULightComponent>();
-
-		if (LightComponent)
-		{
-			LightComponent->SetIntensity(NewIntensity);
-		}
-	}
+	UMercyHelpers::SetLightIntensityByTag(this, Tag, NewIntensity);
 }
 
 void AIndex1MercyCellController::PlaySound2DIfValid(USoundBase* Sound)
 {
-	if (Sound)
-	{
-		UGameplayStatics::PlaySound2D(this, Sound);
-	}
+	UMercyHelpers::PlaySound2DIfValid(this, Sound);
 }
 
 void AIndex1MercyCellController::DebugMessage(const FString& Message, const FColor& Color, float Duration) const
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
-
-	if (bShowDebugMessages && GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, Duration, Color, Message);
-	}
+	UMercyHelpers::DebugMessage(bShowDebugMessages, Message, Color, Duration);
 }
