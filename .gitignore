@@ -1,0 +1,15 @@
+.vs/
+.vscode/
+Binaries/
+DerivedDataBCache/
+Intermediate/
+Saved/
+Build/
+*.sln
+*.VC.db
+*.opensdf
+*.sdf
+*.suo
+*.user
+*.userosscache
+*.sln.DotSettings.user
