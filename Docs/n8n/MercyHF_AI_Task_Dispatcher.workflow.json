@@ -2,10 +2,15 @@
   "name": "MercyHF AI Task Dispatcher",
   "nodes": [
     {
-      "parameters": {},
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mercyhf-task",
+        "responseMode": "onReceived",
+        "options": {}
+      },
       "id": "e2ba847c-38d5-4ad9-be26-ee857b6f6fde",
-      "name": "Manual Trigger",
-      "type": "n8n-nodes-base.manualTrigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
         100,
@@ -19,27 +24,27 @@
           "string": [
             {
               "name": "task_title",
-              "value": "INDEX-0: Build first playable visual blockout"
+              "value": "={{ $json.body.task_title || \"INDEX-0: Build first playable visual blockout\" }}"
             },
             {
               "name": "task_description",
-              "value": "Build the first playable INDEX-0 level area in Unreal Editor with spawn room, corridor, red warning light, visible DO NOT FOLLOW THE VOICES text, and basic horror atmosphere."
+              "value": "={{ $json.body.task_description || \"Build the first playable INDEX-0 level area in Unreal Editor with spawn room, corridor, red warning light, visible DO NOT FOLLOW THE VOICES text, and basic horror atmosphere.\" }}"
             },
             {
               "name": "task_type",
-              "value": "visual"
+              "value": "={{ $json.body.task_type || \"visual\" }}"
             },
             {
               "name": "target_agent",
-              "value": "antigravity"
+              "value": "={{ $json.body.target_agent || \"antigravity\" }}"
             },
             {
               "name": "priority",
-              "value": "high"
+              "value": "={{ $json.body.priority || \"high\" }}"
             },
             {
               "name": "level",
-              "value": "index-0"
+              "value": "={{ $json.body.level || \"index-0\" }}"
             }
           ]
         },
@@ -81,7 +86,7 @@
     }
   ],
   "connections": {
-    "Manual Trigger": {
+    "Webhook Trigger": {
       "main": [
         [
           {
