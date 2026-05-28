@@ -1,11 +1,14 @@
 .vs/
 .vscode/
 Binaries/
-DerivedDataBCache/
+DerivedDataCache/
 Intermediate/
 Saved/
 Build/
+.claude/
+.ralph/
 *.sln
+UpgradeLog.htm
 *.VC.db
 *.opensdf
 *.sdf
