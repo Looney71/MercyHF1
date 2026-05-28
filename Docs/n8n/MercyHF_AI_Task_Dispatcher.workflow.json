@@ -1,0 +1,111 @@
+{
+  "name": "MercyHF AI Task Dispatcher",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e2ba847c-38d5-4ad9-be26-ee857b6f6fde",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "task_title",
+              "value": "INDEX-0: Build first playable visual blockout"
+            },
+            {
+              "name": "task_description",
+              "value": "Build the first playable INDEX-0 level area in Unreal Editor with spawn room, corridor, red warning light, visible DO NOT FOLLOW THE VOICES text, and basic horror atmosphere."
+            },
+            {
+              "name": "task_type",
+              "value": "visual"
+            },
+            {
+              "name": "target_agent",
+              "value": "antigravity"
+            },
+            {
+              "name": "priority",
+              "value": "high"
+            },
+            {
+              "name": "level",
+              "value": "index-0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ac6763a8-4c92-491b-9fbb-1d88bb4aef47",
+      "name": "Set Task Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        320,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "owner": "Looney71",
+        "repository": "MercyHF1",
+        "title": "={{ $json.task_title }}",
+        "body": "=### Goal\n{{ $json.task_description }}\n\n### Context\nAuto-dispatched development task for MercyHF project.\n\n### Target agent\n* {{ $json.target_agent }}\n\n### Level\n* {{ $json.level }}\n\n### Allowed files/systems\n* Level-specific assets and maps (`Content/`)\n* Blueprints related to `{{ $json.level }}` trigger logic\n\n### Forbidden files/systems\n* Core C++ files (`Source/`)\n* Do not modify unrelated level maps or global configurations\n\n### Acceptance criteria\n* spawn room exists\n* short path/corridor exists\n* DO NOT FOLLOW THE VOICES is visible in PIE\n* L_Entry_Red is visibly red\n* player can walk in PIE\n* changed .uasset/.umap files are reported\n\n### Testing requirements\nRun PIE in Index0_Game and confirm the visual blockout is playable.",
+        "additionalFields": {
+          "labels": "={{ [\"agent:\" + $json.target_agent, \"type:\" + $json.task_type, \"level:\" + $json.level, \"priority:\" + $json.priority] }}"
+        }
+      },
+      "id": "bfd0e010-85f2-49cf-8984-d62157cb6c3c",
+      "name": "GitHub Create Issue",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        540,
+        240
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "github-credential-placeholder",
+          "name": "GitHub Account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Task Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Task Fields": {
+      "main": [
+        [
+          {
+            "node": "GitHub Create Issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1.0",
+  "id": "mercyhf-task-dispatcher"
+}
