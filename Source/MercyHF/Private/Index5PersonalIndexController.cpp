@@ -2,6 +2,7 @@
 
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
+#include "MercyHelpers.h"
 #include "MercySystemTextActor.h"
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
@@ -20,7 +21,7 @@ void AIndex5PersonalIndexController::BeginPlay()
 
 	for (const FMercyPersonalIndexChamber& Chamber : Chambers)
 	{
-		SetActorsHiddenByTag(Chamber.ActorsToShowTag, true);
+		UMercyHelpers::SetActorsHiddenByTag(this, Chamber.ActorsToShowTag, true);
 	}
 
 	if (bAutoStart)
@@ -102,8 +103,8 @@ void AIndex5PersonalIndexController::AdvanceChamber()
 	}
 
 	const FMercyPersonalIndexChamber& PreviousChamber = Chambers[CurrentChamberIndex];
-	SetActorsHiddenByTag(PreviousChamber.ActorsToShowTag, true);
-	SetActorsHiddenByTag(PreviousChamber.ActorsToHideTag, false);
+	UMercyHelpers::SetActorsHiddenByTag(this, PreviousChamber.ActorsToShowTag, true);
+	UMercyHelpers::SetActorsHiddenByTag(this, PreviousChamber.ActorsToHideTag, false);
 
 	++CurrentChamberIndex;
 
@@ -120,10 +121,10 @@ void AIndex5PersonalIndexController::ShowCurrentChamber()
 
 	const FMercyPersonalIndexChamber& CurrentChamber = Chambers[CurrentChamberIndex];
 
-	SetActorsHiddenByTag(CurrentChamber.ActorsToShowTag, false);
-	SetActorsHiddenByTag(CurrentChamber.ActorsToHideTag, true);
+	UMercyHelpers::SetActorsHiddenByTag(this, CurrentChamber.ActorsToShowTag, false);
+	UMercyHelpers::SetActorsHiddenByTag(this, CurrentChamber.ActorsToHideTag, true);
 
-	PlaySound2DIfValid(ChamberAdvanceSound);
+	UMercyHelpers::PlaySound2DIfValid(this, ChamberAdvanceSound);
 
 	const FString FullMessage = FString::Printf(
 		TEXT("%s\n%s"),
@@ -131,7 +132,7 @@ void AIndex5PersonalIndexController::ShowCurrentChamber()
 		*CurrentChamber.SystemMessage
 	);
 
-	ShowSystemText(FullMessage);
+	UMercyHelpers::ShowSystemTextByTag(this, SystemTextTag, FullMessage);
 
 	GetWorldTimerManager().SetTimer(
 		ChamberTimerHandle,
@@ -152,71 +153,29 @@ void AIndex5PersonalIndexController::CompletePersonalIndex()
 {
 	GetWorldTimerManager().ClearTimer(ChamberTimerHandle);
 
-	PlaySound2DIfValid(CompletionSound);
+	UMercyHelpers::PlaySound2DIfValid(this, CompletionSound);
 
-	ShowSystemText(TEXT("PERSONAL INDEX CREATED\nGROUP CLASSIFICATION: UNSTABLE\nMERCY PROTOCOL: 31%"), 10.0f);
+	UMercyHelpers::ShowSystemTextByTag(this, SystemTextTag, TEXT("PERSONAL INDEX CREATED\nGROUP CLASSIFICATION: UNSTABLE\nMERCY PROTOCOL: 31%"), 0.035f, 10.0f);
 
 	DebugMessage(TEXT("INDEX-5 completed"), FColor::Green, 8.0f);
 }
 
 void AIndex5PersonalIndexController::ShowSystemText(const FString& Message, float AutoHideAfter)
 {
-	TArray<AActor*> TextActors;
-
-	if (!SystemTextTag.IsNone())
-	{
-		UGameplayStatics::GetAllActorsWithTag(GetWorld(), SystemTextTag, TextActors);
-	}
-	else
-	{
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMercySystemTextActor::StaticClass(), TextActors);
-	}
-
-	for (AActor* Actor : TextActors)
-	{
-		AMercySystemTextActor* TextActor = Cast<AMercySystemTextActor>(Actor);
-
-		if (TextActor)
-		{
-			TextActor->ShowTypewriterMessage(Message, 0.035f, AutoHideAfter);
-		}
-	}
+	UMercyHelpers::ShowSystemTextByTag(this, SystemTextTag, Message, 0.035f, AutoHideAfter);
 }
 
 void AIndex5PersonalIndexController::SetActorsHiddenByTag(FName Tag, bool bShouldHide)
 {
-	if (Tag.IsNone())
-	{
-		return;
-	}
-
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), Tag, FoundActors);
-
-	for (AActor* Actor : FoundActors)
-	{
-		if (Actor)
-		{
-			Actor->SetActorHiddenInGame(bShouldHide);
-			Actor->SetActorEnableCollision(!bShouldHide);
-		}
-	}
+	UMercyHelpers::SetActorsHiddenByTag(this, Tag, bShouldHide);
 }
 
 void AIndex5PersonalIndexController::PlaySound2DIfValid(USoundBase* Sound)
 {
-	if (Sound)
-	{
-		UGameplayStatics::PlaySound2D(this, Sound);
-	}
+	UMercyHelpers::PlaySound2DIfValid(this, Sound);
 }
 
 void AIndex5PersonalIndexController::DebugMessage(const FString& Message, const FColor& Color, float Duration) const
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
-
-	if (bShowDebugMessages && GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, Duration, Color, Message);
-	}
+	UMercyHelpers::DebugMessage(bShowDebugMessages, Message, Color, Duration);
 }

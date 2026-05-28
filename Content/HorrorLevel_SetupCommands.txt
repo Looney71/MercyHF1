@@ -1,0 +1,40 @@
+# MercyHF Horror Level - Quick Setup Commands
+# Copy these commands into Unreal Editor Console or use as reference
+
+# 1. Spawn Index0EntryController
+# In Content Browser: Drag BP_Index0EntryController_Native to level at (0,0,0)
+
+# 2. Create PlayerStart
+# Add > Basic > Player Start at (-400, 0, 50)
+
+# 3. Create Main Lights (ENTRY_MAIN_LIGHT)
+# Add > Lights > Point Light at (-200, -100, 200)
+# Details > Tags: Add "ENTRY_MAIN_LIGHT"
+# Light > Intensity: 2000
+# Duplicate to (-200, 100, 200)
+
+# 4. Create Red Emergency Lights (ENTRY_RED_LIGHT)
+# Add > Lights > Point Light at (0, -150, 180)
+# Details > Tags: Add "ENTRY_RED_LIGHT"
+# Light > Intensity: 80
+# Light > Light Color: Red (1, 0, 0)
+# Duplicate to (0, 150, 180)
+
+# 5. Create Warning Text (ENTRY_WARNING_TEXT)
+# Add > Basic > Text Render at (100, 0, 150)
+# Details > Tags: Add "ENTRY_WARNING_TEXT"
+# Text Render > Text: "DO NOT FOLLOW VOICES"
+# Text Render > World Size: 48
+# Rendering > Actor Hidden In Game: True (initially hidden)
+
+# 6. Create Path Elements (ENTRY_PATH_REVEAL)
+# Add > Basic > Cube at (200, 0, 0)
+# Details > Tags: Add "ENTRY_PATH_REVEAL"
+# Scale: (1, 4, 3) to make door-like
+# Rendering > Actor Hidden In Game: True (initially hidden)
+
+# 7. Basic Room Geometry
+# Add > Basic > Cube at (0, 0, -10) Scale: (8, 8, 0.2) for floor
+# Add > Basic > Cube walls around perimeter
+
+# Test: Press Play - should see lighting sequence after 2 seconds

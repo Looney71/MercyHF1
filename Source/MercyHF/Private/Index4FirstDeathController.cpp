@@ -5,6 +5,7 @@
 #include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
+#include "MercyHelpers.h"
 #include "MercyProtocolComponent.h"
 #include "MercyRespawnComponent.h"
 #include "MercySystemTextActor.h"
@@ -36,7 +37,7 @@ void AIndex4FirstDeathController::BeginPlay()
 		DeathTrigger->OnComponentBeginOverlap.AddDynamic(this, &AIndex4FirstDeathController::HandleDeathTriggerOverlap);
 	}
 
-	SetActorsHiddenByTag(MonsterRevealTag, true);
+	UMercyHelpers::SetActorsHiddenByTag(this, MonsterRevealTag, true);
 
 	DebugMessage(TEXT("Index4 First Death Controller ready"), FColor::Cyan, 3.0f);
 }
@@ -50,7 +51,7 @@ void AIndex4FirstDeathController::HandleDeathTriggerOverlap(
 	const FHitResult& SweepResult
 )
 {
-	if (!IsValidPlayerActor(OtherActor))
+	if (!UMercyHelpers::IsValidPlayerActor(OtherActor))
 	{
 		return;
 	}
@@ -73,8 +74,8 @@ void AIndex4FirstDeathController::StartFirstDeath(AActor* VictimActor)
 	bHasTriggered = true;
 	PendingVictim = VictimActor;
 
-	ShowSystemText(TEXT("ESCAPE ATTEMPT DETECTED"));
-	SetActorsHiddenByTag(FakeExitTag, false);
+	UMercyHelpers::ShowSystemTextByTag(this, SystemTextTag, TEXT("ESCAPE ATTEMPT DETECTED"));
+	UMercyHelpers::SetActorsHiddenByTag(this, FakeExitTag, false);
 
 	GetWorldTimerManager().SetTimer(
 		ChaseTimerHandle,
@@ -97,9 +98,9 @@ void AIndex4FirstDeathController::StartFirstDeath(AActor* VictimActor)
 
 void AIndex4FirstDeathController::StartChase()
 {
-	ShowSystemText(TEXT("REGISTRATION INCOMPLETE"));
-	SetActorsHiddenByTag(MonsterRevealTag, false);
-	PlaySound2DIfValid(ChaseSound);
+	UMercyHelpers::ShowSystemTextByTag(this, SystemTextTag, TEXT("REGISTRATION INCOMPLETE"));
+	UMercyHelpers::SetActorsHiddenByTag(this, MonsterRevealTag, false);
+	UMercyHelpers::PlaySound2DIfValid(this, ChaseSound);
 
 	DebugMessage(TEXT("INDEX-4 chase started"), FColor::Red, 4.0f);
 }
@@ -122,10 +123,10 @@ void AIndex4FirstDeathController::TerminateSubject()
 		ProtocolComponent->AddFearPercent(15.0f);
 	}
 
-	PlaySound2DIfValid(DeathSound);
+	UMercyHelpers::PlaySound2DIfValid(this, DeathSound);
 
-	ShowSystemText(TEXT("SUBJECT TERMINATED"));
-	SetActorsHiddenByTag(MonsterRevealTag, true);
+	UMercyHelpers::ShowSystemTextByTag(this, SystemTextTag, TEXT("SUBJECT TERMINATED"));
+	UMercyHelpers::SetActorsHiddenByTag(this, MonsterRevealTag, true);
 
 	GetWorldTimerManager().SetTimer(
 		RespawnTimerHandle,
@@ -154,79 +155,32 @@ void AIndex4FirstDeathController::RestoreSubject()
 		RespawnComponent->RespawnOwnerAtCheckpoint();
 	}
 
-	ShowSystemText(TEXT("DEATH IS NOT AN EXIT"), 6.0f);
+	UMercyHelpers::ShowSystemTextByTag(this, SystemTextTag, TEXT("DEATH IS NOT AN EXIT"), 0.035f, 6.0f);
 
 	DebugMessage(TEXT("INDEX-4 subject restored"), FColor::Green, 5.0f);
 }
 
 void AIndex4FirstDeathController::ShowSystemText(const FString& Message, float AutoHideAfter)
 {
-	TArray<AActor*> TextActors;
-
-	if (!SystemTextTag.IsNone())
-	{
-		UGameplayStatics::GetAllActorsWithTag(GetWorld(), SystemTextTag, TextActors);
-	}
-	else
-	{
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMercySystemTextActor::StaticClass(), TextActors);
-	}
-
-	for (AActor* Actor : TextActors)
-	{
-		AMercySystemTextActor* TextActor = Cast<AMercySystemTextActor>(Actor);
-
-		if (TextActor)
-		{
-			TextActor->ShowTypewriterMessage(Message, 0.035f, AutoHideAfter);
-		}
-	}
+	UMercyHelpers::ShowSystemTextByTag(this, SystemTextTag, Message, 0.035f, AutoHideAfter);
 }
 
 void AIndex4FirstDeathController::SetActorsHiddenByTag(FName Tag, bool bShouldHide)
 {
-	if (Tag.IsNone())
-	{
-		return;
-	}
-
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), Tag, FoundActors);
-
-	for (AActor* Actor : FoundActors)
-	{
-		if (Actor)
-		{
-			Actor->SetActorHiddenInGame(bShouldHide);
-			Actor->SetActorEnableCollision(!bShouldHide);
-		}
-	}
+	UMercyHelpers::SetActorsHiddenByTag(this, Tag, bShouldHide);
 }
 
 void AIndex4FirstDeathController::PlaySound2DIfValid(USoundBase* Sound)
 {
-	if (Sound)
-	{
-		UGameplayStatics::PlaySound2D(this, Sound);
-	}
+	UMercyHelpers::PlaySound2DIfValid(this, Sound);
 }
 
 bool AIndex4FirstDeathController::IsValidPlayerActor(AActor* OtherActor) const
 {
-	if (!OtherActor)
-	{
-		return false;
-	}
-
-	return OtherActor->IsA<APawn>() || OtherActor->ActorHasTag(TEXT("Player"));
+	return UMercyHelpers::IsValidPlayerActor(OtherActor);
 }
 
 void AIndex4FirstDeathController::DebugMessage(const FString& Message, const FColor& Color, float Duration) const
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
-
-	if (bShowDebugMessages && GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, Duration, Color, Message);
-	}
+	UMercyHelpers::DebugMessage(bShowDebugMessages, Message, Color, Duration);
 }

@@ -5,6 +5,7 @@
 #include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
+#include "MercyHelpers.h"
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
 
@@ -156,19 +157,35 @@ void AMercyTriggerVolume::ApplyActorVisibilityByTag(FName Tag, bool bShouldHide)
         return;
     }
 
-    TArray<AActor*> FoundActors;
-    UGameplayStatics::GetAllActorsWithTag(GetWorld(), Tag, FoundActors);
+    // Use MercyHelpers for consistent collision-aware hiding
+    UMercyHelpers::SetActorsHiddenByTag(this, Tag, bShouldHide, true);
 
-    ApplyActorVisibilityList(FoundActors, bShouldHide);
+    if (bShowDebugMessages)
+    {
+        const FString Action = bShouldHide ? TEXT("Hiding") : TEXT("Showing");
+        DebugMessage(FString::Printf(TEXT("MercyTrigger: %s actors with tag '%s'"), *Action, *Tag.ToString()), FColor::Orange, 3.0f);
+    }
 }
 
 void AMercyTriggerVolume::ApplyActorVisibilityList(const TArray<AActor*>& Actors, bool bShouldHide)
 {
+    if (Actors.Num() == 0)
+    {
+        return;
+    }
+
+    const FString Action = bShouldHide ? TEXT("Hiding") : TEXT("Showing");
+    if (bShowDebugMessages)
+    {
+        DebugMessage(FString::Printf(TEXT("MercyTrigger: %s %d specific actors"), *Action, Actors.Num()), FColor::Orange, 3.0f);
+    }
+
     for (AActor* Actor : Actors)
     {
         if (Actor)
         {
             Actor->SetActorHiddenInGame(bShouldHide);
+            Actor->SetActorEnableCollision(!bShouldHide);
         }
     }
 }

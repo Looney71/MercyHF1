@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
+#include "MercyHelpers.h"
 
 AIndex0EntryController::AIndex0EntryController()
 {
@@ -16,15 +17,13 @@ void AIndex0EntryController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	DebugMessage(TEXT("Index0 Entry Controller started"), FColor::Green, 4.0f);
+	DebugMessage(TEXT("=== INDEX-0 ENTRY CONTROLLER STARTING ==="), FColor::Green, 6.0f);
+	DebugMessage(FString::Printf(TEXT("Controller placed at: %s"), *GetActorLocation().ToString()), FColor::Green, 4.0f);
 
 	CacheEntryActors();
 
-	DebugMessage(FString::Printf(TEXT("Main lights found: %d"), MainLightActors.Num()), FColor::Cyan, 5.0f);
-	DebugMessage(FString::Printf(TEXT("Red lights found: %d"), RedLightActors.Num()), FColor::Cyan, 5.0f);
-	DebugMessage(FString::Printf(TEXT("Warning texts found: %d"), WarningTextActors.Num()), FColor::Cyan, 5.0f);
-	DebugMessage(FString::Printf(TEXT("Path reveal actors found: %d"), PathRevealActors.Num()), FColor::Cyan, 5.0f);
-
+	// Initial setup with detailed logging
+	DebugMessage(TEXT("Setting initial actor states..."), FColor::Blue, 3.0f);
 	SetActorsHidden(WarningTextActors, true);
 	SetActorsHidden(PathRevealActors, true);
 
@@ -33,6 +32,10 @@ void AIndex0EntryController::BeginPlay()
 
 	SetLightIntensity(RedLightActors, RedLightIdleIntensity);
 	SetTextForActors(WarningTextActors, TEXT("DO NOT FOLLOW VOICES"));
+
+	// Timer setup with detailed logging
+	DebugMessage(FString::Printf(TEXT("Setting up timers: Blackout=%.1fs, Warning=%.1fs, Help=%.1fs, Path=%.1fs"),
+		LightsOffDelay, WarningTextDelay, HelpVoiceDelay, PathRevealDelay), FColor::Blue, 5.0f);
 
 	GetWorldTimerManager().SetTimer(
 		LightsOffTimerHandle,
@@ -65,6 +68,8 @@ void AIndex0EntryController::BeginPlay()
 		PathRevealDelay,
 		false
 	);
+
+	DebugMessage(TEXT("=== INDEX-0 ENTRY CONTROLLER READY ==="), FColor::Green, 6.0f);
 }
 
 void AIndex0EntryController::CacheEntryActors()
@@ -74,8 +79,18 @@ void AIndex0EntryController::CacheEntryActors()
 	WarningTextActors.Empty();
 	PathRevealActors.Empty();
 
+	DebugMessage(TEXT("=== INDEX-0 ACTOR CACHING START ==="), FColor::White, 8.0f);
+
 	TArray<AActor*> AllActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
+
+	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), AllActors.Num()), FColor::White, 6.0f);
+
+	// Track what we find for detailed reporting
+	int32 MainLightsByTag = 0, MainLightsByName = 0;
+	int32 RedLightsByTag = 0, RedLightsByName = 0;
+	int32 WarningTextsByTag = 0, WarningTextsByName = 0;
+	int32 PathRevealsByTag = 0, PathRevealsByName = 0;
 
 	for (AActor* Actor : AllActors)
 	{
@@ -84,26 +99,94 @@ void AIndex0EntryController::CacheEntryActors()
 			continue;
 		}
 
+		// Check main lights with detailed tracking
 		if (ActorMatches(Actor, MainLightTag, TEXT("L_Entry_Main")))
 		{
 			MainLightActors.Add(Actor);
+			if (Actor->ActorHasTag(MainLightTag))
+			{
+				MainLightsByTag++;
+				DebugMessage(FString::Printf(TEXT("Main light found by TAG: %s"), *Actor->GetName()), FColor::Green, 6.0f);
+			}
+			else
+			{
+				MainLightsByName++;
+				DebugMessage(FString::Printf(TEXT("Main light found by NAME: %s"), *Actor->GetName()), FColor::Yellow, 6.0f);
+			}
 		}
 
+		// Check red lights with detailed tracking
 		if (ActorMatches(Actor, RedLightTag, TEXT("L_Entry_Red")))
 		{
 			RedLightActors.Add(Actor);
+			if (Actor->ActorHasTag(RedLightTag))
+			{
+				RedLightsByTag++;
+				DebugMessage(FString::Printf(TEXT("Red light found by TAG: %s"), *Actor->GetName()), FColor::Green, 6.0f);
+			}
+			else
+			{
+				RedLightsByName++;
+				DebugMessage(FString::Printf(TEXT("Red light found by NAME: %s"), *Actor->GetName()), FColor::Yellow, 6.0f);
+			}
 		}
 
+		// Check warning text with detailed tracking
 		if (ActorMatches(Actor, WarningTextTag, TEXT("TXT_DoNotFollowVoices")))
 		{
 			WarningTextActors.Add(Actor);
+			if (Actor->ActorHasTag(WarningTextTag))
+			{
+				WarningTextsByTag++;
+				DebugMessage(FString::Printf(TEXT("Warning text found by TAG: %s"), *Actor->GetName()), FColor::Green, 6.0f);
+			}
+			else
+			{
+				WarningTextsByName++;
+				DebugMessage(FString::Printf(TEXT("Warning text found by NAME: %s"), *Actor->GetName()), FColor::Yellow, 6.0f);
+			}
 		}
 
+		// Check path reveal with detailed tracking
 		if (ActorMatches(Actor, PathRevealTag, TEXT("Entry_Path")))
 		{
 			PathRevealActors.Add(Actor);
+			if (Actor->ActorHasTag(PathRevealTag))
+			{
+				PathRevealsByTag++;
+				DebugMessage(FString::Printf(TEXT("Path reveal found by TAG: %s"), *Actor->GetName()), FColor::Green, 6.0f);
+			}
+			else
+			{
+				PathRevealsByName++;
+				DebugMessage(FString::Printf(TEXT("Path reveal found by NAME: %s"), *Actor->GetName()), FColor::Yellow, 6.0f);
+			}
 		}
 	}
+
+	// Summary report
+	DebugMessage(FString::Printf(TEXT("MAIN LIGHTS: %d total (%d by tag, %d by name)"),
+		MainLightActors.Num(), MainLightsByTag, MainLightsByName), FColor::Cyan, 8.0f);
+	DebugMessage(FString::Printf(TEXT("RED LIGHTS: %d total (%d by tag, %d by name)"),
+		RedLightActors.Num(), RedLightsByTag, RedLightsByName), FColor::Cyan, 8.0f);
+	DebugMessage(FString::Printf(TEXT("WARNING TEXTS: %d total (%d by tag, %d by name)"),
+		WarningTextActors.Num(), WarningTextsByTag, WarningTextsByName), FColor::Cyan, 8.0f);
+	DebugMessage(FString::Printf(TEXT("PATH REVEALS: %d total (%d by tag, %d by name)"),
+		PathRevealActors.Num(), PathRevealsByTag, PathRevealsByName), FColor::Cyan, 8.0f);
+
+	// Warn about missing critical actors
+	if (MainLightActors.Num() == 0)
+	{
+		DebugMessage(FString::Printf(TEXT("WARNING: No main lights found! Looking for tag '%s' or name containing 'L_Entry_Main'"),
+			*MainLightTag.ToString()), FColor::Red, 10.0f);
+	}
+	if (RedLightActors.Num() == 0)
+	{
+		DebugMessage(FString::Printf(TEXT("WARNING: No red lights found! Looking for tag '%s' or name containing 'L_Entry_Red'"),
+			*RedLightTag.ToString()), FColor::Red, 10.0f);
+	}
+
+	DebugMessage(TEXT("=== INDEX-0 ACTOR CACHING COMPLETE ==="), FColor::White, 8.0f);
 }
 
 bool AIndex0EntryController::ActorMatches(AActor* Actor, FName RequiredTag, const FString& NameContains) const
@@ -139,10 +222,14 @@ bool AIndex0EntryController::ActorMatches(AActor* Actor, FName RequiredTag, cons
 
 void AIndex0EntryController::StartBlackout()
 {
-	DebugMessage(TEXT("ENTRY: blackout started"), FColor::Red, 4.0f);
+	DebugMessage(TEXT("=== BLACKOUT SEQUENCE STARTING ==="), FColor::Red, 6.0f);
+	DebugMessage(FString::Printf(TEXT("Hiding %d main lights, intensifying %d red lights"),
+		MainLightActors.Num(), RedLightActors.Num()), FColor::Red, 5.0f);
 
 	SetActorsHidden(MainLightActors, true);
 	SetLightIntensity(RedLightActors, RedLightBlackoutIntensity);
+
+	DebugMessage(TEXT("=== BLACKOUT SEQUENCE COMPLETE ==="), FColor::Red, 4.0f);
 }
 
 void AIndex0EntryController::ShowWarningText()
@@ -185,35 +272,54 @@ void AIndex0EntryController::RevealPathForward()
 
 void AIndex0EntryController::SetActorsHidden(const TArray<AActor*>& Actors, bool bShouldHide)
 {
+	const FString ActionName = bShouldHide ? TEXT("HIDING") : TEXT("SHOWING");
+	DebugMessage(FString::Printf(TEXT("%s %d actors..."), *ActionName, Actors.Num()), FColor::Orange, 3.0f);
+
 	for (AActor* Actor : Actors)
 	{
-		if (Actor)
+		if (!Actor)
 		{
-			Actor->SetActorHiddenInGame(bShouldHide);
-			Actor->SetActorEnableCollision(!bShouldHide);
+			DebugMessage(TEXT("Skipping null actor"), FColor::Red, 2.0f);
+			continue;
+		}
 
-			if (ULightComponent* LightComp = Actor->FindComponentByClass<ULightComponent>())
+		// Set basic actor visibility
+		Actor->SetActorHiddenInGame(bShouldHide);
+		Actor->SetActorEnableCollision(!bShouldHide);
+
+		// Handle light components with detailed logging
+		ULightComponent* LightComp = Actor->FindComponentByClass<ULightComponent>();
+		if (LightComp)
+		{
+			if (bShouldHide)
 			{
-				if (bShouldHide)
-				{
-					LightComp->SetVisibility(false, true);
-					LightComp->SetIntensity(0.0f);
-				}
-				else
-				{
-					LightComp->SetVisibility(true, true);
-				}
+				const float OldIntensity = LightComp->Intensity;
+				LightComp->SetVisibility(false, true);
+				LightComp->SetIntensity(0.0f);
+				DebugMessage(FString::Printf(TEXT("Light %s: hidden (was intensity %.1f)"), *Actor->GetName(), OldIntensity), FColor::Purple, 4.0f);
 			}
+			else
+			{
+				LightComp->SetVisibility(true, true);
+				DebugMessage(FString::Printf(TEXT("Light %s: shown (intensity %.1f)"), *Actor->GetName(), LightComp->Intensity), FColor::Purple, 4.0f);
+			}
+		}
+		else
+		{
+			DebugMessage(FString::Printf(TEXT("Actor %s: %s (no light component)"), *Actor->GetName(), *ActionName.ToLower()), FColor(128, 128, 128), 3.0f);
 		}
 	}
 }
 
 void AIndex0EntryController::SetLightIntensity(const TArray<AActor*>& Actors, float NewIntensity)
 {
+	DebugMessage(FString::Printf(TEXT("Setting light intensity to %.1f for %d actors..."), NewIntensity, Actors.Num()), FColor::Orange, 3.0f);
+
 	for (AActor* Actor : Actors)
 	{
 		if (!Actor)
 		{
+			DebugMessage(TEXT("Skipping null actor for intensity change"), FColor::Red, 2.0f);
 			continue;
 		}
 
@@ -221,7 +327,13 @@ void AIndex0EntryController::SetLightIntensity(const TArray<AActor*>& Actors, fl
 
 		if (LightComponent)
 		{
+			const float OldIntensity = LightComponent->Intensity;
 			LightComponent->SetIntensity(NewIntensity);
+			DebugMessage(FString::Printf(TEXT("Light %s: intensity %.1f -> %.1f"), *Actor->GetName(), OldIntensity, NewIntensity), FColor::Magenta, 4.0f);
+		}
+		else
+		{
+			DebugMessage(FString::Printf(TEXT("Actor %s: no light component found for intensity change"), *Actor->GetName()), FColor::Red, 4.0f);
 		}
 	}
 }

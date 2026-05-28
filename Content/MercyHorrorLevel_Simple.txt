@@ -1,0 +1,77 @@
+# MercyHF Horror Level Implementation Guide
+# This file documents the minimal horror level setup for immediate testing
+
+## Level: Index0_Game.umap
+Location: Content/Horror_Template/Demo/Example_Blockout_Map/Index0_Game.umap
+
+## Required Actors to Place in Unreal Editor:
+
+### 1. Index0EntryController Blueprint
+- Asset: Content/BP_Index0EntryController_Native.uasset
+- Position: Center of level (0, 0, 0)
+- Configuration: Default settings (timings already optimized)
+
+### 2. PlayerStart
+- Type: Player Start
+- Position: (-400, 0, 50) - Entry point
+- Rotation: Facing forward (0, 0, 0)
+
+### 3. Main Lights (Tag: ENTRY_MAIN_LIGHT)
+- Type: Point Light
+- Count: 2
+- Positions: (-200, -100, 200), (-200, 100, 200)
+- Intensity: 2000
+- Color: White (1, 1, 1)
+- Tags: ENTRY_MAIN_LIGHT
+
+### 4. Red Emergency Lights (Tag: ENTRY_RED_LIGHT)
+- Type: Point Light
+- Count: 2
+- Positions: (0, -150, 180), (0, 150, 180)
+- Intensity: 80
+- Color: Red (1, 0, 0)
+- Tags: ENTRY_RED_LIGHT
+
+### 5. Warning Text (Tag: ENTRY_WARNING_TEXT)
+- Type: Text Render
+- Position: (100, 0, 150) - On wall facing player
+- Text: "DO NOT FOLLOW VOICES"
+- Font Size: 48
+- Color: White
+- Tags: ENTRY_WARNING_TEXT
+- Initially Hidden: Yes
+
+### 6. Path Reveal Elements (Tag: ENTRY_PATH_REVEAL)
+- Type: Static Mesh (Cube or Wall)
+- Count: 1-2
+- Positions: (200, 0, 0) - Forward path
+- Initially Hidden: Yes
+- Tags: ENTRY_PATH_REVEAL
+
+### 7. Basic Room Geometry
+- Floor: Static Mesh Cube (800x800x20) at (0, 0, -10)
+- Walls: Static Mesh Cubes forming room boundaries
+- Ceiling: Optional for atmosphere
+
+## Horror Sequence Timeline:
+T+0s: Level starts, main lights on, red lights dim
+T+2s: BLACKOUT - main lights off, red lights intensify
+T+2.35s: Warning text appears: "DO NOT FOLLOW VOICES"
+T+4s: Help voice plays (if audio configured)
+T+8s: Path reveals, text changes to "VOLUNTARY ENTRY CONFIRMED"
+
+## Testing Checklist:
+1. Place all actors with exact tags listed above
+2. Play level in editor
+3. Watch for debug messages in output log
+4. Verify lighting changes at T+2s
+5. Verify text appears at T+2.35s
+6. Verify path reveals at T+8s
+
+## Expected Player Experience:
+- Spawn in dimly lit room
+- Brief moment of normal lighting
+- Sudden blackout with red emergency lighting
+- Ominous warning text appears
+- Path forward is revealed after psychological tension
+- Atmosphere of being monitored/controlled
