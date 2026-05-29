@@ -4,6 +4,7 @@
 #include "Components/TextRenderComponent.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
+#include "MercySystemTextActor.h"
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
 #include "MercyHelpers.h"
@@ -30,8 +31,9 @@ void AIndex0EntryController::BeginPlay()
 	SetActorsHidden(MainLightActors, false);
 	SetActorsHidden(RedLightActors, false);
 
+	SetLightColor(RedLightActors, RedLightColor);
 	SetLightIntensity(RedLightActors, RedLightIdleIntensity);
-	SetTextForActors(WarningTextActors, TEXT("DO NOT FOLLOW VOICES"));
+	SetTextForActors(WarningTextActors, TEXT("DO NOT FOLLOW THE VOICES"));
 
 	// Timer setup with detailed logging
 	DebugMessage(FString::Printf(TEXT("Setting up timers: Blackout=%.1fs, Warning=%.1fs, Help=%.1fs, Path=%.1fs"),
@@ -227,6 +229,7 @@ void AIndex0EntryController::StartBlackout()
 		MainLightActors.Num(), RedLightActors.Num()), FColor::Red, 5.0f);
 
 	SetActorsHidden(MainLightActors, true);
+	SetLightColor(RedLightActors, RedLightColor);
 	SetLightIntensity(RedLightActors, RedLightBlackoutIntensity);
 
 	DebugMessage(TEXT("=== BLACKOUT SEQUENCE COMPLETE ==="), FColor::Red, 4.0f);
@@ -236,8 +239,7 @@ void AIndex0EntryController::ShowWarningText()
 {
 	DebugMessage(TEXT("ENTRY: warning text shown"), FColor::Yellow, 4.0f);
 
-	SetTextForActors(WarningTextActors, TEXT("DO NOT FOLLOW VOICES"));
-	SetActorsHidden(WarningTextActors, false);
+	ShowTextForActors(WarningTextActors, TEXT("DO NOT FOLLOW THE VOICES"));
 }
 
 void AIndex0EntryController::PlayHelpVoice()
@@ -267,7 +269,7 @@ void AIndex0EntryController::RevealPathForward()
 	DebugMessage(TEXT("ENTRY: path forward revealed"), FColor::Green, 4.0f);
 
 	SetActorsHidden(PathRevealActors, false);
-	SetTextForActors(WarningTextActors, TEXT("VOLUNTARY ENTRY CONFIRMED"));
+	ShowTextForActors(WarningTextActors, TEXT("VOLUNTARY ENTRY CONFIRMED"));
 }
 
 void AIndex0EntryController::SetActorsHidden(const TArray<AActor*>& Actors, bool bShouldHide)
@@ -338,6 +340,24 @@ void AIndex0EntryController::SetLightIntensity(const TArray<AActor*>& Actors, fl
 	}
 }
 
+void AIndex0EntryController::SetLightColor(const TArray<AActor*>& Actors, const FLinearColor& NewColor)
+{
+	for (AActor* Actor : Actors)
+	{
+		if (!Actor)
+		{
+			continue;
+		}
+
+		ULightComponent* LightComponent = Actor->FindComponentByClass<ULightComponent>();
+
+		if (LightComponent)
+		{
+			LightComponent->SetLightColor(NewColor);
+		}
+	}
+}
+
 void AIndex0EntryController::SetTextForActors(const TArray<AActor*>& Actors, const FString& NewText)
 {
 	for (AActor* Actor : Actors)
@@ -352,6 +372,34 @@ void AIndex0EntryController::SetTextForActors(const TArray<AActor*>& Actors, con
 		if (TextComponent)
 		{
 			TextComponent->SetText(FText::FromString(NewText));
+		}
+	}
+}
+
+void AIndex0EntryController::ShowTextForActors(const TArray<AActor*>& Actors, const FString& NewText)
+{
+	for (AActor* Actor : Actors)
+	{
+		if (!Actor)
+		{
+			continue;
+		}
+
+		Actor->SetActorHiddenInGame(false);
+
+		if (AMercySystemTextActor* SystemTextActor = Cast<AMercySystemTextActor>(Actor))
+		{
+			SystemTextActor->ShowInstantMessage(NewText);
+			continue;
+		}
+
+		UTextRenderComponent* TextComponent = Actor->FindComponentByClass<UTextRenderComponent>();
+
+		if (TextComponent)
+		{
+			TextComponent->SetText(FText::FromString(NewText));
+			TextComponent->SetVisibility(true, true);
+			TextComponent->SetHiddenInGame(false);
 		}
 	}
 }

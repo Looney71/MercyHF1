@@ -39,6 +39,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Mercy Maze|Lighting")
 	float RedLightBlackoutIntensity = 450.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Mercy Maze|Lighting")
+	FLinearColor RedLightColor = FLinearColor(1.0f, 0.0f, 0.0f);
+
 	UPROPERTY(EditAnywhere, Category = "Mercy Maze|Audio")
 	USoundBase* HelpVoiceSound = nullptr;
 
@@ -85,7 +88,9 @@ private:
 
 	void SetActorsHidden(const TArray<AActor*>& Actors, bool bShouldHide);
 	void SetLightIntensity(const TArray<AActor*>& Actors, float NewIntensity);
+	void SetLightColor(const TArray<AActor*>& Actors, const FLinearColor& NewColor);
 	void SetTextForActors(const TArray<AActor*>& Actors, const FString& NewText);
+	void ShowTextForActors(const TArray<AActor*>& Actors, const FString& NewText);
 
 	void DebugMessage(const FString& Message, const FColor& Color, float Duration) const;
 };
