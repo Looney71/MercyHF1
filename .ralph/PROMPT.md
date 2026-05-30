@@ -127,3 +127,7 @@ Autonomy clarification:
 - If build verification is needed, execute it through Bash/cmd.exe automatically.
 - If something cannot be done because of tool limitations, write it to .ralph/last_report.md and continue with the next useful task.
 - Continue autonomous development without waiting for user input.
+
+Model/cost rule:
+Use claude-sonnet-4 only. Do not use Opus. Do not switch to claude-opus-4.7.
+Prefer smaller focused loops. Avoid reading huge unrelated files unless necessary.

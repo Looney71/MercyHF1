@@ -1,83 +1,202 @@
-# MercyHF Unreal Project Rules & Architecture for AI Agents (Jules, Claude, etc.)
+# MercyHF Agent Rules
 
-Welcome to the **Mercy Maze (MercyHF)** project! This is a high-quality cooperative Unreal Engine 5 horror game project built with C++ and Blueprint integrations.
+This project is an Unreal Engine horror game. Treat maps, C++ controllers,
+Blueprints, and automation as production assets. Do not frame new work as a
+temporary demo or a cut-down version. Build durable, correct, architecturally
+sustainable systems that can be extended by future agents.
 
-To make development stable, efficient, and free of bugs, follow these rules and project structures.
+## Current Level Architecture
 
----
+### Index0_Game
 
-## 🗺️ Project Level Loop & Architecture
+Purpose: prologue entry space and first atmospheric tutorial beat.
 
-The game follows a seamless cooperative gameplay loop across three main levels and a main menu:
+Primary controller:
+- `AIndex0EntryController`
 
+Important tags:
+- `ENTRY_MAIN_LIGHT`: lighting or emissive actors hidden during blackout.
+- `ENTRY_RED_LIGHT`: emergency red lighting intensified during blackout.
+- `ENTRY_WARNING_TEXT`: warning text actors revealed by the controller.
+- `ENTRY_PATH_REVEAL`: hidden path/destination actors revealed later.
+- `SYSTEM_TEXT`: generic system text actors.
+
+Notes:
+- Index0 uses photo-reference industrial concrete, wet floors, red emergency
+  lighting, and wall-stencil warnings.
+- TextRender wall stencils must be aligned to the wall plane and offset slightly
+  from the surface to avoid clipping.
+
+### Index1_Game
+
+Current purpose: first structured trial route.
+
+Current layout in the committed map:
+- Spawn / flashlight room.
+- Corridor A compression path.
+- Mercy Cell / Observation central room.
+- Corridor B compression path.
+- Exit chamber.
+- Bent link toward Index2 content.
+- Early Index2 help-room handoff is present in the same map as transitional
+  content.
+
+Known key actors:
+- `BP_Index1_EntranceDoor`
+- `BP_Index1_ExitDoor`
+- `BP_Index1_SystemText`
+- `BP_Index1_Controller`
+- `BP_Index2_EntranceDoor`
+- `BP_Index2_SystemText`
+- `BP_Index2_Controller`
+
+Do not describe the current Index1 map as a different large-scale traversal
+layout unless the map has actually been rebuilt that way. Keep documents
+synchronized with real map content.
+
+### Index2_Game
+
+Current purpose: INDEX-5 trial chambers map.
+
+Known core actors:
+- `BP_Index5_Controller` (`AIndex5PersonalIndexController`)
+- `BP_Hub_SystemText`
+- `BP_LevelTransition_ToEnd`
+- `BP_Resistance_CoopController`
+- `BP_Checkpoint_Hub`
+- `BP_Checkpoint_Mercy`
+- `BP_Fear_Jumpscare_Trigger`
+- `BP_Fear_Jumpscare_Monster`
+- `BP_Resistance_PatrolMonster`
+
+Known functional zones:
+- Elevator / arrival.
+- Decon scanner.
+- Central hub / observation room.
+- FEAR chamber.
+- GUILT chamber.
+- MEMORY chamber.
+- RESISTANCE chamber with co-op interaction.
+- MERCY chamber.
+- Sewage outflow / end transition.
+
+## C++ Classes To Reuse
+
+Prefer existing C++ classes over ad-hoc Blueprint-only logic when they match the
+task:
+
+- `AMercyLevelTransition`: level loading trigger.
+- `AMercyCheckpointActor`: player checkpoint / respawn marker.
+- `AMercyCoopPuzzleController`: overlap-based cooperative puzzle controller.
+- `AMercyScareEvent`: audio/visual scare trigger with actor visibility control.
+- `AMercySystemTextActor`: 3D system text with typewriter/blink behavior.
+- `AIndex0EntryController`: Index0 blackout, warnings, path reveal.
+- `AIndex1MercyCellController`: Index1 Mercy Cell sequence.
+- `AIndex2HelpRoomController`: Index2 help-room sequence.
+- `AIndex5PersonalIndexController`: INDEX-5 chamber sequence.
+
+## Unreal Python Rules
+
+### Rotator argument order
+
+The Unreal Python `unreal.Rotator` constructor does not behave like the common
+C++ mental model. In this project, use explicit keyword fields or assign fields
+directly:
+
+```python
+r = unreal.Rotator()
+r.pitch = 0
+r.yaw = 90
+r.roll = 0
+actor.set_actor_rotation(r, False)
 ```
-[Index0_Game] (Prologue)
-      │
-      ▼ (via AMercyLevelTransition)
-[Index1_Game] (Abyss & Airlock)
-      │
-      ▼ (via AMercyLevelTransition)
-[Index2_Game] (INDEX-5 Trial Chambers)
-      │
-      ▼ (via AMercyLevelTransition)
-[Main_Menu_Map] (Loop Complete)
+
+Do not write `unreal.Rotator(0, 90, 0)` expecting `(pitch, yaw, roll)`. That can
+set pitch instead of yaw and will make doors/text lie on the wrong axis.
+
+### Text and signboard alignment
+
+For wall text:
+- Use explicit rotation fields.
+- Offset text slightly away from the wall surface.
+- Keep backing boards at the same intended plane and orientation as the text.
+- Avoid Z offsets that make backing boards float above the text.
+
+For TextRender wall stencils:
+- North wall (`Y+`) usually faces inward with `yaw = -90`.
+- South wall (`Y-`) usually faces inward with `yaw = 90`.
+- East-facing door/wall surfaces may need `yaw = 180`.
+- West-facing surfaces may need `yaw = 0`.
+
+Verify in editor or PIE screenshots after changing text orientation.
+
+### Emergency red lighting color conventions (Blue-to-Red Fix)
+
+Due to BGR-byte-order swapping in Unreal Engine Python structures:
+- Emergency red lights (e.g. `L_Entry_Red_*`, `I5_FEAR_RED_*`, `LIFT_ALARM`, `MW_RED_*`, etc.) must be explicitly configured using `unreal.LinearColor(r=1.0, g=0.0, b=0.0, a=1.0)`.
+- Do not assign `unreal.Color(r=255, g=0, b=0, a=255)` directly as it can result in blue lights (`r=0, g=0, b=255`) due to internal nativization casting errors.
+- Any new red light placed in the scene must have B=0 and R=255/1.0.
+
+### INDEX-5 Chamber Warning Texts and Backplates
+
+When creating thresholds or transitions for trial chambers (e.g. FEAR, MEMORY, RESISTANCE, MERCY):
+- Place a bespoke `BP_*_Text` of class `MercySystemTextActor` at the entrance, facing the arrival route (`yaw = 180.0`).
+- Place a matching `*_SIGNBOARD` backplate of class `StaticMeshActor` (mesh `/Engine/BasicShapes/Cube.Cube`, scale `0.1, 2.5, 0.8`) exactly 5 units behind the text.
+- Verify that Z-levels of both text and backplate match perfectly.
+
+## Level Transition Contracts & Player Checkpoints
+
+Seamless co-op loops rely on strict transition triggers:
+1. **Index0_Game ➡️ Index1_Game:** Spawn actor `AMercyLevelTransition` (Target: `Index1_Game`) in transition gateway.
+2. **Index1_Game ➡️ Index2_Game:** Trigger `BP_LevelTransition_ToIndex2` at the end of the cat-walk bridge (X: 7800, Y: -950) once the first death scene completes.
+3. **Index2_Game ➡️ End/Main Menu:** Trigger `BP_LevelTransition_ToEnd` at the end of the Sewage Outflow tunnel (X: 11600).
+4. **Player Checkpoints:** Spawn `AMercyCheckpointActor` (e.g. `BP_Checkpoint_Airlock` in Index1, `BP_Checkpoint_Hub` and `BP_Checkpoint_Mercy` in Index2) to preserve player progression.
+
+## Agent Handoff & Loop Rules
+
+This codebase is managed in a multi-agent loop with the following roles:
+- **Codex:** Primary loop orchestrator, verifies task files and triggers loop.
+- **Antigravity:** Codebase architect, builds maps, implements spatial triggers, and corrects visual/logical bugs.
+- **Jules:** C++ systems engineer, handles compiler errors and Unreal Build Tool (UBT) automation.
+
+Handoff protocol:
+1. **Always read issues:** Retrieve the latest active GitHub issue to identify target goals.
+2. **Report metrics:** Output changed files, design decisions, and recommended next tasks at the end of each turn.
+3. **Loop advanced:** Trigger the `mercyhf-loop` webhook immediately upon task completion to keep the development loop rolling without human intervention.
+
+## Build And Verification Rules
+
+Do not claim a clean build if Unreal Build Tool was blocked by Live Coding or by
+an open editor DLL lock. A blocked UBT run is not proof that C++ compiled.
+
+Required verification depends on the change:
+- C++ changes: run UBT with the editor closed or Live Coding disabled.
+- Map changes: load the map, save it, run PIE smoke checks when practical.
+- Controller/tag changes: inspect runtime logs for actor counts and sequence
+  events.
+- Navigation/AI changes: verify NavMesh bounds and runtime AI behavior.
+
+## Source Control Rules
+
+- Do not revert user or other-agent changes unless explicitly requested.
+- Before editing, run `git status --short` and understand dirty files.
+- Report changed `.umap` and `.uasset` files explicitly.
+- Do not modify `Binaries`, `Intermediate`, `Saved`, `DerivedDataCache`, or
+  `.vs`.
+- Do not create broad refactors while map work is in progress.
+
+## Automation Rules
+
+n8n task dispatcher payloads should include:
+
+```json
+{
+  "task_description": "...",
+  "target_agent": "codex|antigravity|jules",
+  "level": "Index0_Game|Index1_Game|Index2_Game|ProjectWide"
+}
 ```
 
-### 1. `Index0_Game` (The Prologue)
-*   **Purpose:** Initial atmospheric entry and prologue tutorial.
-*   **Controller:** `AIndex0EntryController` (C++) / `BP_Index0EntryController` (Blueprint) manages the starting blackout sequence, warning text reveals, sound events, and path activation.
-*   **Critical Tags:** 
-    *   `ENTRY_MAIN_LIGHT` (Main lighting to turn off during blackout)
-    *   `ENTRY_RED_LIGHT` (Emergency light to intensify)
-    *   `ENTRY_WARNING_TEXT` and `SYSTEM_TEXT` (Warning text signboards)
-    *   `ENTRY_PATH_REVEAL` (Transition trigger volume, kept hidden initially)
-
-### 2. `Index1_Game` (Catwalks, Abyss & Airlock)
-*   **Purpose:** First major trial zone involving high-altitude catwalks and the bottomless "Abyss".
-*   **Features:**
-    *   `BP_Checkpoint_Airlock` (`AMercyCheckpointActor`) at X=3850, Y=-950, Z=50 before the Abyss to prevent unfair restarts.
-    *   Transition chamber at the end of the catwalks (X=7675, Y=-950, Z=50) containing `BP_LevelTransition_ToIndex2` (`AMercyLevelTransition`) pointing to `Index2_Game`.
-
-### 3. `Index2_Game` (INDEX-5 Chambers of Trials)
-*   **Purpose:** Brand new, massive facility comprising a starting Cargo Lift, Decon scanner, Central Observation Hub, and 5 separate branch trial rooms (INDEX-5):
-    *   **FEAR (Chamber 1):** Darkness and flashing red light. Contains `BP_Fear_Jumpscare_Trigger` (`AMercyScareEvent`) flashing `BP_Fear_Jumpscare_Monster` for 1.3 seconds, and a `MercyFearZone`.
-    *   **GUILT (Chamber 2):** Swamp-green cell block with tables and signboards warning players.
-    *   **MEMORY (Chamber 3):** Eerie glossy neon-blue grid with repeating structural columns.
-    *   **RESISTANCE (Chamber 4):** Heavy steam pipes and double co-op pressure plates (`I5_RES_PLATE_1`/`2`) connected to `BP_Resistance_CoopController` (`AMercyCoopPuzzleController`). Players must stand on both plates simultaneously to unlock `BP_Resistance_Gate`. Stalked by patrolling AI monster `BP_Resistance_PatrolMonster` using NavMesh.
-    *   **MERCY (Chamber 5):** Sterile white chamber ending with the Sewage Outflow escape tunnel.
-*   **Escape Route:** The Sewage tunnel ends with an exit gate leading to `BP_LevelTransition_ToEnd` (`AMercyLevelTransition`) pointing to `Main_Menu_Map`, completing the co-op loop.
-
----
-
-## 🛠️ C++ Classes Reference
-
-Always leverage existing modular C++ classes when creating level logic or triggers:
-*   `AMercyLevelTransition` (TargetLevelName, TransitionDelay, bEnabled) - Seamless level loader.
-*   `AMercyCheckpointActor` (CheckpointID, SpawnLocationOffset) - Player respawn points.
-*   `AMercyCoopPuzzleController` - Activates/deactivates actors based on multi-player overlap.
-*   `AMercyScareEvent` - Plays audio-visual jumpscares and handles monster visibility timers.
-*   `AMercySystemTextActor` - Modern 3D text renderer with typewriter formatting.
-
----
-
-## ⚠️ CRITICAL GOTCHAS (READ THIS BEFORE CODING!)
-
-To prevent breaking level geometry, collisions, or aesthetics, adhere strictly to these engineering constraints:
-
-### 📐 1. The Swapped unreal.Rotator Constructor Bug (VERY IMPORTANT!)
-*   In the standard Unreal C++ API, `FRotator` is defined as `FRotator(Pitch, Yaw, Roll)`.
-*   **HOWEVER**, in the **Unreal Engine Python API**, the constructor signature is **`unreal.Rotator(roll=0.0, pitch=0.0, yaw=0.0)`**!
-*   **The Trap:** Writing `unreal.Rotator(0, 90, 0)` under the assumption it represents `(pitch, yaw, roll)` will set **`pitch = 90.0`** and leave `yaw = 0.0`. This makes doors, signboards, or texts lie completely flat on the floor, clip through walls, and block player movement!
-*   **The Fix:** 
-    *   To set a Yaw of 90 degrees, always write **`unreal.Rotator(0, 0, 90)`** or use keyword arguments: **`unreal.Rotator(yaw=90)`**.
-    *   To set a Yaw of 180 degrees, write **`unreal.Rotator(0, 0, 180)`** or **`unreal.Rotator(yaw=180)`**.
-
-### 📝 2. Signboard and Text Alignment Rules
-*   3D text actors (`AMercySystemTextActor`) and their backing dark signboard static meshes (`StaticMeshActor`) must be aligned perfectly.
-*   **Pivot Rule:** Signboards should share the exact Z-coordinate as their text actor (`bz = t_loc.z`) and the exact rotation (`unreal.Rotator(0, 0, text_yaw)`).
-*   **Never** offset the signboard Z-level by +100 units; doing so causes the signboard to float 1 meter above the text, ruining readability.
-
-### 🚫 3. Code & Asset Integrity
-*   Do not delete or rename pre-existing assets, maps, blueprints, or plugins.
-*   Never modify files inside `Binaries`, `Intermediate`, `Saved`, `DerivedDataCache`, or `.vs`.
-*   Keep C++ changes clean, modular, and fully compileable. Verify compilation before saving or committing.
+Use `/webhook-test/mercyhf-task` only when the n8n canvas is waiting for a test
+execution. Use `/webhook/mercyhf-task` only when the user intends to start the
+active production workflow.

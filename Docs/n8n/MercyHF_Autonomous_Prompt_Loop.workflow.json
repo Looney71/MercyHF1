@@ -1,0 +1,256 @@
+{
+  "name": "MercyHF Autonomous Prompt Loop",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mercyhf-loop",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "4e8d83c7-0f17-4f55-b748-7db2a7c92410",
+      "name": "Loop Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        120,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "loop_id",
+              "value": "={{ $json.body.loop_id || 'mercyhf-autonomous-main' }}"
+            },
+            {
+              "name": "target_agent",
+              "value": "={{ $json.body.target_agent || 'antigravity' }}"
+            },
+            {
+              "name": "level_focus",
+              "value": "={{ $json.body.level_focus || 'ProjectWide' }}"
+            },
+            {
+              "name": "mode",
+              "value": "={{ $json.body.mode || 'durable-forward-development' }}"
+            },
+            {
+              "name": "last_result_summary",
+              "value": "={{ $json.body.last_result_summary || 'Loop bootstrapped. Continue from current repository state and project rules.' }}"
+            },
+            {
+              "name": "repository_owner",
+              "value": "={{ $json.body.repository_owner || 'Looney71' }}"
+            },
+            {
+              "name": "repository_name",
+              "value": "={{ $json.body.repository_name || 'MercyHF1' }}"
+            },
+            {
+              "name": "webhook_base_url",
+              "value": "={{ $json.body.webhook_base_url || 'https://looney.app.n8n.cloud/webhook/mercyhf-loop' }}"
+            }
+          ],
+          "number": [
+            {
+              "name": "iteration",
+              "value": "={{ Number($json.body.iteration || 0) }}"
+            },
+            {
+              "name": "max_iterations",
+              "value": "={{ Number($json.body.max_iterations || 24) }}"
+            },
+            {
+              "name": "delay_seconds",
+              "value": "={{ Number($json.body.delay_seconds || 900) }}"
+            }
+          ],
+          "boolean": [
+            {
+              "name": "loop_enabled",
+              "value": "={{ $json.body.loop_enabled !== false }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c39de7c4-2393-4e88-9815-bcc78d1029b6",
+      "name": "Normalize Loop State",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        360,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const state = items[0].json;\nconst iteration = Number(state.iteration || 0);\nconst maxIterations = Number(state.max_iterations || 24);\nconst nextIteration = iteration + 1;\nconst phases = [\n  {\n    key: 'index0-photo-pass',\n    level: 'Index0_Game',\n    title: 'INDEX-0 architectural photo-reference pass',\n    goal: 'Continue rebuilding Index0_Game toward the provided industrial concrete reference: wet floor readability, red emergency accents, wall warning text, ceiling light language, pipes, panels, benches, and player-scale composition.'\n  },\n  {\n    key: 'index1-anchor-dressing',\n    level: 'Index1_Game',\n    title: 'INDEX-1 anchored dressing and traversal pass',\n    goal: 'Use IDX1_ROUTE_* and IDX1_EVT_* anchors as the spatial contract. Add durable lighting, audio, blocking, trigger placement, checkpoint planning, and visual dressing around the anchors without anonymous coordinate sprawl.'\n  },\n  {\n    key: 'index2-chamber-polish',\n    level: 'Index2_Game',\n    title: 'INDEX-2 chamber continuity and atmosphere pass',\n    goal: 'Strengthen INDEX-5 chamber continuity, readable transitions, co-op interaction staging, scare timing, and end-route clarity while preserving existing C++ controller contracts.'\n  },\n  {\n    key: 'shared-systems-hardening',\n    level: 'ProjectWide',\n    title: 'Shared MercyHF systems hardening pass',\n    goal: 'Improve reusable structure across docs, tags, Blueprint conventions, level transition contracts, and agent handoff rules. Avoid broad rewrites; make changes that future passes can build on safely.'\n  }\n];\nconst phase = phases[iteration % phases.length];\nconst title = `${phase.title} - loop ${nextIteration}/${maxIterations}`;\nconst body = `### Autonomous Loop\nLoop ID: ${state.loop_id}\\nIteration: ${nextIteration}/${maxIterations}\\nMode: ${state.mode}\\nTarget agent: ${state.target_agent}\\nLevel focus: ${phase.level}\\n\\n### Strategic Goal\\n${phase.goal}\\n\\n### Previous Context\\n${state.last_result_summary}\\n\\n### Operating Rules\\n- Build correctly and durably; think several passes ahead.\\n- Read AGENTS.md and CLAUDE.md before touching the project.\\n- Preserve existing Codex/user/other-agent changes. Do not revert unrelated dirty files.\\n- Prefer existing MercyHF C++ controllers and tags over one-off Blueprint/script logic.\\n- For Index1_Game, attach new systems to IDX1_ROUTE_* and IDX1_EVT_* anchors.\\n- For wall text, set explicit Unreal Rotator fields and keep text aligned to wall planes.\\n- Do not claim a clean C++ build if UBT is blocked by Live Coding or an open editor.\\n- Report exact changed files and the next architectural task to feed back into this loop.\\n\\n### Output Contract\\nReturn a concise implementation report with:\\n1. changed files;\\n2. map/assets touched;\\n3. important design decisions;\\n4. next recommended loop task;\\n5. any blocker requiring human decision.\\n\\n### Continue Rule\\nAt the end, call the loop webhook again with updated last_result_summary if there is no human blocker. Keep the loop focused on architectural forward progress, not random expansion.`;\nreturn [{ json: {\n  ...state,\n  next_iteration: nextIteration,\n  continue_loop: Boolean(state.loop_enabled) && nextIteration < maxIterations,\n  phase_key: phase.key,\n  task_title: title,\n  task_description: body,\n  task_type: 'autonomous-loop',\n  priority: 'high',\n  level: phase.level,\n  next_payload: {\n    loop_id: state.loop_id,\n    target_agent: state.target_agent,\n    level_focus: state.level_focus,\n    mode: state.mode,\n    iteration: nextIteration,\n    max_iterations: maxIterations,\n    delay_seconds: Number(state.delay_seconds || 900),\n    loop_enabled: Boolean(state.loop_enabled),\n    repository_owner: state.repository_owner,\n    repository_name: state.repository_name,\n    webhook_base_url: state.webhook_base_url,\n    last_result_summary: `Previous issue created: ${title}. Continue with the next architectural phase unless a human blocker was reported.`\n  }\n}}];"
+      },
+      "id": "27743785-9885-4e13-b69d-6bed0780de13",
+      "name": "Compose Next Architectural Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "owner": "={{ $json.repository_owner }}",
+        "repository": "={{ $json.repository_name }}",
+        "title": "={{ $json.task_title }}",
+        "body": "={{ $json.task_description }}",
+        "additionalFields": {
+          "labels": "={{ ['agent:' + $json.target_agent, 'type:' + $json.task_type, 'level:' + $json.level, 'priority:' + $json.priority, 'loop:' + $json.loop_id, 'phase:' + $json.phase_key] }}"
+        }
+      },
+      "id": "d0da416c-f416-4e64-8d8e-f234f96f0a4d",
+      "name": "GitHub Create Loop Issue",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [
+        900,
+        280
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "github-credential-placeholder",
+          "name": "GitHub Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $node[\"Compose Next Architectural Prompt\"].json.continue_loop }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "5d2980e4-7f67-4d1c-9c4d-a7864688bcae",
+      "name": "Continue Loop?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $node[\"Compose Next Architectural Prompt\"].json.delay_seconds }}",
+        "unit": "seconds"
+      },
+      "id": "436271ef-8353-41aa-b746-a15cadf497c5",
+      "name": "Delay Before Next Prompt",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $node[\"Compose Next Architectural Prompt\"].json.webhook_base_url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($node[\"Compose Next Architectural Prompt\"].json.next_payload) }}",
+        "options": {}
+      },
+      "id": "228999f8-c62f-431e-a9c8-9aa5b4e2d01e",
+      "name": "Call Loop Webhook Again",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1640,
+        180
+      ]
+    }
+  ],
+  "connections": {
+    "Loop Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Loop State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Loop State": {
+      "main": [
+        [
+          {
+            "node": "Compose Next Architectural Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose Next Architectural Prompt": {
+      "main": [
+        [
+          {
+            "node": "GitHub Create Loop Issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Create Loop Issue": {
+      "main": [
+        [
+          {
+            "node": "Continue Loop?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continue Loop?": {
+      "main": [
+        [
+          {
+            "node": "Delay Before Next Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Delay Before Next Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Loop Webhook Again",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.0",
+  "id": "mercyhf-autonomous-prompt-loop"
+}
