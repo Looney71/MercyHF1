@@ -87,6 +87,7 @@ private:
 	bool ActorMatches(AActor* Actor, FName RequiredTag, const FString& NameContains) const;
 
 	void SetActorsHidden(const TArray<AActor*>& Actors, bool bShouldHide);
+	void SetEntryLightsEnabled(const TArray<AActor*>& Actors, bool bIsEnabled);
 	void SetLightIntensity(const TArray<AActor*>& Actors, float NewIntensity);
 	void SetLightColor(const TArray<AActor*>& Actors, const FLinearColor& NewColor);
 	void SetTextForActors(const TArray<AActor*>& Actors, const FString& NewText);

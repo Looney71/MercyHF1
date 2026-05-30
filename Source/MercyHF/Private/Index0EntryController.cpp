@@ -25,15 +25,15 @@ void AIndex0EntryController::BeginPlay()
 
 	// Initial setup with detailed logging
 	DebugMessage(TEXT("Setting initial actor states..."), FColor::Blue, 3.0f);
-	SetActorsHidden(WarningTextActors, true);
+	SetActorsHidden(WarningTextActors, false); // Keep visible but unlit/dark initially
 	SetActorsHidden(PathRevealActors, true);
 
-	SetActorsHidden(MainLightActors, false);
-	SetActorsHidden(RedLightActors, false);
+	SetEntryLightsEnabled(MainLightActors, true);
+	SetEntryLightsEnabled(RedLightActors, true);
 
 	SetLightColor(RedLightActors, RedLightColor);
 	SetLightIntensity(RedLightActors, RedLightIdleIntensity);
-	SetTextForActors(WarningTextActors, TEXT("DO NOT FOLLOW THE VOICES"));
+	SetTextForActors(WarningTextActors, TEXT("FOLLOW THE VOICES"));
 
 	// Timer setup with detailed logging
 	DebugMessage(FString::Printf(TEXT("Setting up timers: Blackout=%.1fs, Warning=%.1fs, Help=%.1fs, Path=%.1fs"),
@@ -225,10 +225,10 @@ bool AIndex0EntryController::ActorMatches(AActor* Actor, FName RequiredTag, cons
 void AIndex0EntryController::StartBlackout()
 {
 	DebugMessage(TEXT("=== BLACKOUT SEQUENCE STARTING ==="), FColor::Red, 6.0f);
-	DebugMessage(FString::Printf(TEXT("Hiding %d main lights, intensifying %d red lights"),
+	DebugMessage(FString::Printf(TEXT("Disabling %d main lights, intensifying %d red lights"),
 		MainLightActors.Num(), RedLightActors.Num()), FColor::Red, 5.0f);
 
-	SetActorsHidden(MainLightActors, true);
+	SetEntryLightsEnabled(MainLightActors, false);
 	SetLightColor(RedLightActors, RedLightColor);
 	SetLightIntensity(RedLightActors, RedLightBlackoutIntensity);
 
@@ -313,6 +313,30 @@ void AIndex0EntryController::SetActorsHidden(const TArray<AActor*>& Actors, bool
 	}
 }
 
+void AIndex0EntryController::SetEntryLightsEnabled(const TArray<AActor*>& Actors, bool bIsEnabled)
+{
+	DebugMessage(FString::Printf(TEXT("Setting light components enabled=%d for %d actors..."), bIsEnabled, Actors.Num()), FColor::Orange, 3.0f);
+
+	for (AActor* Actor : Actors)
+	{
+		if (!Actor)
+		{
+			continue;
+		}
+
+		ULightComponent* LightComp = Actor->FindComponentByClass<ULightComponent>();
+		if (LightComp)
+		{
+			LightComp->SetVisibility(bIsEnabled, true);
+			if (!bIsEnabled)
+			{
+				LightComp->SetIntensity(0.0f);
+			}
+			DebugMessage(FString::Printf(TEXT("Light %s: visibility set to %d"), *Actor->GetName(), bIsEnabled), FColor::Purple, 4.0f);
+		}
+	}
+}
+
 void AIndex0EntryController::SetLightIntensity(const TArray<AActor*>& Actors, float NewIntensity)
 {
 	DebugMessage(FString::Printf(TEXT("Setting light intensity to %.1f for %d actors..."), NewIntensity, Actors.Num()), FColor::Orange, 3.0f);
@@ -367,11 +391,19 @@ void AIndex0EntryController::SetTextForActors(const TArray<AActor*>& Actors, con
 			continue;
 		}
 
+		if (AMercySystemTextActor* SystemTextActor = Cast<AMercySystemTextActor>(Actor))
+		{
+			SystemTextActor->SetMessageColor(FColor(40, 40, 40)); // Dark, unlit gray!
+			SystemTextActor->ShowInstantMessage(NewText);
+			continue;
+		}
+
 		UTextRenderComponent* TextComponent = Actor->FindComponentByClass<UTextRenderComponent>();
 
 		if (TextComponent)
 		{
 			TextComponent->SetText(FText::FromString(NewText));
+			TextComponent->SetTextRenderColor(FColor(40, 40, 40)); // Dark, unlit gray!
 		}
 	}
 }
@@ -389,6 +421,14 @@ void AIndex0EntryController::ShowTextForActors(const TArray<AActor*>& Actors, co
 
 		if (AMercySystemTextActor* SystemTextActor = Cast<AMercySystemTextActor>(Actor))
 		{
+			if (NewText.Contains(TEXT("VOLUNTARY")))
+			{
+				SystemTextActor->SetMessageColor(FColor(180, 180, 180)); // Medium gray for path confirmed
+			}
+			else
+			{
+				SystemTextActor->SetMessageColor(FColor(255, 0, 0)); // Vibrant red
+			}
 			SystemTextActor->ShowInstantMessage(NewText);
 			continue;
 		}
@@ -400,6 +440,15 @@ void AIndex0EntryController::ShowTextForActors(const TArray<AActor*>& Actors, co
 			TextComponent->SetText(FText::FromString(NewText));
 			TextComponent->SetVisibility(true, true);
 			TextComponent->SetHiddenInGame(false);
+			
+			if (NewText.Contains(TEXT("VOLUNTARY")))
+			{
+				TextComponent->SetTextRenderColor(FColor(180, 180, 180)); // Medium gray
+			}
+			else
+			{
+				TextComponent->SetTextRenderColor(FColor(255, 0, 0)); // Vibrant red
+			}
 		}
 	}
 }
