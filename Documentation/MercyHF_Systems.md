@@ -22,7 +22,7 @@ The awakening sequence. Caches scene actors by tag (or by name fallback) and run
 | Stage | Default Delay | Effect |
 |-------|---------------|--------|
 | Idle  | 0s            | Main lights on, red lights at idle intensity, warning text hidden, path hidden |
-| Blackout | 2.0s       | Hide main lights; raise red lights to blackout intensity |
+| Blackout | 2.0s       | Disable main light components/emissive materials while keeping physical panels visible; raise red lights to blackout intensity |
 | Warning text | 2.35s | Set "DO NOT FOLLOW VOICES" and reveal `ENTRY_WARNING_TEXT` actors |
 | Help voice | 4.0s    | Play 2D help voice sound (loaded from `HelpSoundAssetPath` if `HelpVoiceSound` empty) |
 | Path reveal | 8.0s   | Reveal `ENTRY_PATH_REVEAL` actors and update warning text to "VOLUNTARY ENTRY CONFIRMED" |

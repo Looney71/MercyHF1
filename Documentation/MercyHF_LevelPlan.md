@@ -18,7 +18,7 @@ The progression is linear: INDEX-0 awakens the subject, each subsequent INDEX in
 
 | Actor type | Tag | Notes |
 |------------|-----|-------|
-| Main lights | `ENTRY_MAIN_LIGHT` | Bright white. Hidden after blackout. Do not move `PointLight_1`. |
+| Main lights | `ENTRY_MAIN_LIGHT` | Bright white light sources. Switch off during blackout, but keep physical panels visible. Do not move `PointLight_1`. |
 | Red lights | `ENTRY_RED_LIGHT` | Idle 80, blackout 450. Do not move `L_Entry_Red`. |
 | Warning text | `ENTRY_WARNING_TEXT` | `TextRenderComponent`. Do not move `TXT_DoNotFollowVoices`. |
 | Path reveal meshes | `ENTRY_PATH_REVEAL` | Hidden until 8s mark |
