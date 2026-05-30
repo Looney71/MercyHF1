@@ -270,9 +270,9 @@ bool AIndex0EntryController::ActorMatches(AActor* Actor, FName RequiredTag, cons
 		return true;
 	}
 
-	const FString ActorLabel = Actor->GetActorLabel();
+	const FString CurrentActorLabel = Actor->GetActorLabel();
 
-	if (ActorLabel.Contains(NameContains))
+	if (CurrentActorLabel.Contains(NameContains))
 	{
 		return true;
 	}
