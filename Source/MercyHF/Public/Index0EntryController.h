@@ -2,9 +2,29 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/StaticMeshComponent.h"
+#include "Materials/MaterialInterface.h"
 #include "Index0EntryController.generated.h"
 
 class USoundBase;
+
+USTRUCT(BlueprintType)
+struct FCachedMaterialInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	UStaticMeshComponent* MeshComponent = nullptr;
+
+	UPROPERTY()
+	int32 MaterialIndex = 0;
+
+	UPROPERTY()
+	UMaterialInterface* OriginalMaterial = nullptr;
+
+	UPROPERTY()
+	UMaterialInterface* OffMaterial = nullptr;
+};
 
 UCLASS()
 class MERCYHF_API AIndex0EntryController : public AActor
@@ -71,6 +91,9 @@ private:
 
 	UPROPERTY()
 	TArray<AActor*> PathRevealActors;
+
+	UPROPERTY()
+	TArray<FCachedMaterialInfo> CachedMaterials;
 
 	FTimerHandle LightsOffTimerHandle;
 	FTimerHandle WarningTextTimerHandle;

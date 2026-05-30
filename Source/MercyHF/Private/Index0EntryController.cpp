@@ -2,6 +2,7 @@
 
 #include "Components/LightComponent.h"
 #include "Components/TextRenderComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercySystemTextActor.h"
@@ -80,6 +81,7 @@ void AIndex0EntryController::CacheEntryActors()
 	RedLightActors.Empty();
 	WarningTextActors.Empty();
 	PathRevealActors.Empty();
+	CachedMaterials.Empty();
 
 	DebugMessage(TEXT("=== INDEX-0 ACTOR CACHING START ==="), FColor::White, 8.0f);
 
@@ -176,6 +178,64 @@ void AIndex0EntryController::CacheEntryActors()
 	DebugMessage(FString::Printf(TEXT("PATH REVEALS: %d total (%d by tag, %d by name)"),
 		PathRevealActors.Num(), PathRevealsByTag, PathRevealsByName), FColor::Cyan, 8.0f);
 
+	// Cache materials for emissive panels/beacons
+	UMaterialInterface* DarkConcrete = Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), nullptr, TEXT("/Game/MercyMaze/Index0/M_IDX0_DarkConcrete.M_IDX0_DarkConcrete")));
+	UMaterialInterface* BlackMetal = Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), nullptr, TEXT("/Game/MercyMaze/Index0/M_IDX0_BlackMetal.M_IDX0_BlackMetal")));
+
+	if (!DarkConcrete)
+	{
+		DebugMessage(TEXT("WARNING: Dark concrete material not found!"), FColor::Red, 10.0f);
+	}
+	if (!BlackMetal)
+	{
+		DebugMessage(TEXT("WARNING: Black metal material not found!"), FColor::Red, 10.0f);
+	}
+
+	auto CacheActorMaterials = [this, DarkConcrete, BlackMetal](const TArray<AActor*>& Actors)
+	{
+		for (AActor* Actor : Actors)
+		{
+			if (!Actor) continue;
+			TArray<UStaticMeshComponent*> MeshComps;
+			Actor->GetComponents<UStaticMeshComponent>(MeshComps);
+			for (UStaticMeshComponent* MeshComp : MeshComps)
+			{
+				if (!MeshComp) continue;
+				for (int32 i = 0; i < MeshComp->GetNumMaterials(); ++i)
+				{
+					UMaterialInterface* Mat = MeshComp->GetMaterial(i);
+					if (Mat)
+					{
+						FString MatName = Mat->GetName();
+						if (MatName.Contains(TEXT("Emissive")))
+						{
+							FCachedMaterialInfo Info;
+							Info.MeshComponent = MeshComp;
+							Info.MaterialIndex = i;
+							Info.OriginalMaterial = Mat;
+							if (MatName.Contains(TEXT("White")))
+							{
+								Info.OffMaterial = DarkConcrete;
+							}
+							else
+							{
+								Info.OffMaterial = BlackMetal;
+							}
+							CachedMaterials.Add(Info);
+							DebugMessage(FString::Printf(TEXT("Cached emissive material for mesh %s in %s: %s (Off: %s)"), 
+								*MeshComp->GetName(), *Actor->GetName(), *Mat->GetName(), Info.OffMaterial ? *Info.OffMaterial->GetName() : TEXT("None")), FColor::Green, 5.0f);
+						}
+					}
+				}
+			}
+		}
+	};
+
+	CacheActorMaterials(MainLightActors);
+	CacheActorMaterials(RedLightActors);
+
+	DebugMessage(FString::Printf(TEXT("Total cached emissive materials: %d"), CachedMaterials.Num()), FColor::Cyan, 8.0f);
+
 	// Warn about missing critical actors
 	if (MainLightActors.Num() == 0)
 	{
@@ -210,14 +270,12 @@ bool AIndex0EntryController::ActorMatches(AActor* Actor, FName RequiredTag, cons
 		return true;
 	}
 
-#if WITH_EDITOR
-	const FString ActorEditorLabel = Actor->GetActorLabel();
+	const FString ActorLabel = Actor->GetActorLabel();
 
-	if (ActorEditorLabel.Contains(NameContains))
+	if (ActorLabel.Contains(NameContains))
 	{
 		return true;
 	}
-#endif
 
 	return false;
 }
@@ -281,41 +339,17 @@ void AIndex0EntryController::SetActorsHidden(const TArray<AActor*>& Actors, bool
 	{
 		if (!Actor)
 		{
-			DebugMessage(TEXT("Skipping null actor"), FColor::Red, 2.0f);
 			continue;
 		}
 
-		// Set basic actor visibility
 		Actor->SetActorHiddenInGame(bShouldHide);
 		Actor->SetActorEnableCollision(!bShouldHide);
-
-		// Handle light components with detailed logging
-		ULightComponent* LightComp = Actor->FindComponentByClass<ULightComponent>();
-		if (LightComp)
-		{
-			if (bShouldHide)
-			{
-				const float OldIntensity = LightComp->Intensity;
-				LightComp->SetVisibility(false, true);
-				LightComp->SetIntensity(0.0f);
-				DebugMessage(FString::Printf(TEXT("Light %s: hidden (was intensity %.1f)"), *Actor->GetName(), OldIntensity), FColor::Purple, 4.0f);
-			}
-			else
-			{
-				LightComp->SetVisibility(true, true);
-				DebugMessage(FString::Printf(TEXT("Light %s: shown (intensity %.1f)"), *Actor->GetName(), LightComp->Intensity), FColor::Purple, 4.0f);
-			}
-		}
-		else
-		{
-			DebugMessage(FString::Printf(TEXT("Actor %s: %s (no light component)"), *Actor->GetName(), *ActionName.ToLower()), FColor(128, 128, 128), 3.0f);
-		}
 	}
 }
 
 void AIndex0EntryController::SetEntryLightsEnabled(const TArray<AActor*>& Actors, bool bIsEnabled)
 {
-	DebugMessage(FString::Printf(TEXT("Setting light components enabled=%d for %d actors..."), bIsEnabled, Actors.Num()), FColor::Orange, 3.0f);
+	DebugMessage(FString::Printf(TEXT("Setting entry lights/emissives enabled=%d for %d actors..."), bIsEnabled, Actors.Num()), FColor::Orange, 3.0f);
 
 	for (AActor* Actor : Actors)
 	{
@@ -324,15 +358,40 @@ void AIndex0EntryController::SetEntryLightsEnabled(const TArray<AActor*>& Actors
 			continue;
 		}
 
-		ULightComponent* LightComp = Actor->FindComponentByClass<ULightComponent>();
-		if (LightComp)
+		// Enable/disable light components
+		TArray<ULightComponent*> LightComps;
+		Actor->GetComponents<ULightComponent>(LightComps);
+		for (ULightComponent* LightComp : LightComps)
 		{
-			LightComp->SetVisibility(bIsEnabled, true);
-			if (!bIsEnabled)
+			if (LightComp)
 			{
-				LightComp->SetIntensity(0.0f);
+				LightComp->SetVisibility(bIsEnabled, true);
+				if (!bIsEnabled)
+				{
+					LightComp->SetIntensity(0.0f);
+				}
+				DebugMessage(FString::Printf(TEXT("Light component %s in %s: set visibility to %d"), *LightComp->GetName(), *Actor->GetName(), bIsEnabled), FColor::Purple, 4.0f);
 			}
-			DebugMessage(FString::Printf(TEXT("Light %s: visibility set to %d"), *Actor->GetName(), bIsEnabled), FColor::Purple, 4.0f);
+		}
+
+		// Update materials for static meshes in this actor using CachedMaterials
+		TArray<UStaticMeshComponent*> MeshComps;
+		Actor->GetComponents<UStaticMeshComponent>(MeshComps);
+		for (UStaticMeshComponent* MeshComp : MeshComps)
+		{
+			if (!MeshComp) continue;
+			for (const FCachedMaterialInfo& Info : CachedMaterials)
+			{
+				if (Info.MeshComponent == MeshComp)
+				{
+					UMaterialInterface* TargetMat = bIsEnabled ? Info.OriginalMaterial : Info.OffMaterial;
+					if (TargetMat)
+					{
+						MeshComp->SetMaterial(Info.MaterialIndex, TargetMat);
+						DebugMessage(FString::Printf(TEXT("Mesh %s in %s: set material index %d to %s"), *MeshComp->GetName(), *Actor->GetName(), Info.MaterialIndex, *TargetMat->GetName()), FColor::Purple, 4.0f);
+					}
+				}
+			}
 		}
 	}
 }
