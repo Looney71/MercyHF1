@@ -222,7 +222,7 @@ void AIndex0EntryController::CacheEntryActors()
 								Info.OffMaterial = BlackMetal;
 							}
 							CachedMaterials.Add(Info);
-							DebugMessage(FString::Printf(TEXT("Cached emissive material for mesh %s in %s: %s (Off: %s)"), 
+							DebugMessage(FString::Printf(TEXT("Cached emissive material for mesh %s in %s: %s (Off: %s)"),
 								*MeshComp->GetName(), *Actor->GetName(), *Mat->GetName(), Info.OffMaterial ? *Info.OffMaterial->GetName() : TEXT("None")), FColor::Green, 5.0f);
 						}
 					}
@@ -499,7 +499,7 @@ void AIndex0EntryController::ShowTextForActors(const TArray<AActor*>& Actors, co
 			TextComponent->SetText(FText::FromString(NewText));
 			TextComponent->SetVisibility(true, true);
 			TextComponent->SetHiddenInGame(false);
-			
+
 			if (NewText.Contains(TEXT("VOLUNTARY")))
 			{
 				TextComponent->SetTextRenderColor(FColor(180, 180, 180)); // Medium gray
