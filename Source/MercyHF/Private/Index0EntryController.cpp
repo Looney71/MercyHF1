@@ -3,6 +3,7 @@
 #include "Components/LightComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercySystemTextActor.h"
 #include "Sound/SoundBase.h"
@@ -83,10 +84,7 @@ void AIndex0EntryController::CacheEntryActors()
 
 	DebugMessage(TEXT("=== INDEX-0 ACTOR CACHING START ==="), FColor::White, 8.0f);
 
-	TArray<AActor*> AllActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
-
-	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), AllActors.Num()), FColor::White, 6.0f);
+	int32 TotalActorsFound = 0;
 
 	// Track what we find for detailed reporting
 	int32 MainLightsByTag = 0, MainLightsByName = 0;
@@ -94,8 +92,10 @@ void AIndex0EntryController::CacheEntryActors()
 	int32 WarningTextsByTag = 0, WarningTextsByName = 0;
 	int32 PathRevealsByTag = 0, PathRevealsByName = 0;
 
-	for (AActor* Actor : AllActors)
+	for (AActor* Actor : TActorRange<AActor>(GetWorld()))
 	{
+		TotalActorsFound++;
+
 		if (!Actor)
 		{
 			continue;
@@ -165,6 +165,9 @@ void AIndex0EntryController::CacheEntryActors()
 			}
 		}
 	}
+
+	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), TotalActorsFound), FColor::White, 6.0f);
+	DebugMessage(TEXT("=== INDEX-0 CACHING RESULTS ==="), FColor::White, 8.0f);
 
 	// Summary report
 	DebugMessage(FString::Printf(TEXT("MAIN LIGHTS: %d total (%d by tag, %d by name)"),
