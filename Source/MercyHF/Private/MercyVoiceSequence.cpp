@@ -1,6 +1,7 @@
 #include "MercyVoiceSequence.h"
 
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercySystemTextActor.h"
 #include "Sound/SoundBase.h"
@@ -196,7 +197,20 @@ void AMercyVoiceSequence::ShowLineText(const FMercyVoiceLine& Line)
 	}
 	else
 	{
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMercySystemTextActor::StaticClass(), TextActors);
+		for (AMercySystemTextActor* SystemTextActor : TActorRange<AMercySystemTextActor>(GetWorld()))
+		{
+			if (!SystemTextActor)
+			{
+				continue;
+			}
+
+			SystemTextActor->ShowTypewriterMessage(
+				Line.Text,
+				Line.CharacterIntervalSeconds,
+				Line.DurationSeconds
+			);
+		}
+		return;
 	}
 
 	for (AActor* Actor : TextActors)

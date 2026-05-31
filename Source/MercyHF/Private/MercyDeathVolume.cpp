@@ -3,6 +3,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercyProtocolComponent.h"
@@ -146,7 +147,14 @@ void AMercyDeathVolume::ShowDeathText()
 	}
 	else
 	{
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMercySystemTextActor::StaticClass(), TextActors);
+		for (AMercySystemTextActor* SystemTextActor : TActorRange<AMercySystemTextActor>(GetWorld()))
+		{
+			if (SystemTextActor)
+			{
+				SystemTextActor->ShowTypewriterMessage(DeathMessage, 0.035f, 5.0f);
+			}
+		}
+		return;
 	}
 
 	for (AActor* Actor : TextActors)
