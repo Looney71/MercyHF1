@@ -2,6 +2,7 @@
 
 #include "Components/LightComponent.h"
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 
@@ -83,10 +84,8 @@ void AMercyLightFlicker::CacheTargetLights()
 {
 	TargetLightActors.Empty();
 
-	TArray<AActor*> AllActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
-
-	for (AActor* Actor : AllActors)
+	// Optimization: Use TActorRange instead of GetAllActorsOfClass to avoid TArray heap allocation
+	for (AActor* Actor : TActorRange<AActor>(GetWorld()))
 	{
 		if (ActorMatchesTarget(Actor))
 		{
