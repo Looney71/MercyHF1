@@ -1,6 +1,7 @@
 #include "Index3MovingWallsController.h"
 
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercyHelpers.h"
 #include "Sound/SoundBase.h"
@@ -43,13 +44,13 @@ void AIndex3MovingWallsController::CacheWallActors()
 
 	DebugMessage(TEXT("=== INDEX-3 WALL CACHING START ==="), FColor::White, 8.0f);
 
-	TArray<AActor*> AllActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
+	int32 TotalActors = 0;
 
-	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), AllActors.Num()), FColor::White, 6.0f);
-
-	for (AActor* Actor : AllActors)
+	// Optimization: Use TActorRange instead of GetAllActorsOfClass to avoid TArray heap allocation
+	for (AActor* Actor : TActorRange<AActor>(GetWorld()))
 	{
+		TotalActors++;
+
 		if (!Actor)
 		{
 			continue;
@@ -90,6 +91,8 @@ void AIndex3MovingWallsController::CacheWallActors()
 			DebugMessage(FString::Printf(TEXT("Path light found: %s"), *Actor->GetName()), FColor::Green, 6.0f);
 		}
 	}
+
+	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), TotalActors), FColor::White, 6.0f);
 
 	// Summary report
 	DebugMessage(FString::Printf(TEXT("LEFT WALLS: %d found"), LeftWallActors.Num()), FColor::Cyan, 8.0f);
