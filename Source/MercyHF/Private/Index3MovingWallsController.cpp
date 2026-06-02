@@ -2,6 +2,7 @@
 
 #include "Engine/Engine.h"
 #include "Kismet/GameplayStatics.h"
+#include "EngineUtils.h"
 #include "MercyHelpers.h"
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
@@ -43,13 +44,12 @@ void AIndex3MovingWallsController::CacheWallActors()
 
 	DebugMessage(TEXT("=== INDEX-3 WALL CACHING START ==="), FColor::White, 8.0f);
 
-	TArray<AActor*> AllActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
-
-	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), AllActors.Num()), FColor::White, 6.0f);
-
-	for (AActor* Actor : AllActors)
+	int32 ActorCount = 0;
+	// ⚡ Bolt: Replaced TArray allocation (GetAllActorsOfClass) with zero-allocation TActorRange for performance
+	for (AActor* Actor : TActorRange<AActor>(GetWorld()))
 	{
+		ActorCount++;
+
 		if (!Actor)
 		{
 			continue;
@@ -90,6 +90,8 @@ void AIndex3MovingWallsController::CacheWallActors()
 			DebugMessage(FString::Printf(TEXT("Path light found: %s"), *Actor->GetName()), FColor::Green, 6.0f);
 		}
 	}
+
+	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), ActorCount), FColor::White, 6.0f);
 
 	// Summary report
 	DebugMessage(FString::Printf(TEXT("LEFT WALLS: %d found"), LeftWallActors.Num()), FColor::Cyan, 8.0f);
