@@ -5,6 +5,7 @@
 #include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
+#include "EngineUtils.h"
 
 AMercyDoorController::AMercyDoorController()
 {
@@ -200,10 +201,8 @@ void AMercyDoorController::CacheTargetDoor()
 		return;
 	}
 
-	TArray<AActor*> AllActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
-
-	for (AActor* Actor : AllActors)
+	// ⚡ Bolt: Replaced TArray allocation (GetAllActorsOfClass) with zero-allocation TActorRange for performance
+	for (AActor* Actor : TActorRange<AActor>(GetWorld()))
 	{
 		if (!Actor || Actor == this)
 		{
