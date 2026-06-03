@@ -1,0 +1,3 @@
+## 2024-06-03 - [Replace GetAllActorsOfClass with TActorRange]
+**Learning:** `UGameplayStatics::GetAllActorsOfClass` allocates a `TArray` on the heap to return all actors of a specific class. In performance-critical or initialization loops where you only need to iterate until a condition is met (early exit), or just iterate once, this causes unnecessary heap allocations. Using `TActorRange<T>(GetWorld())` instead allows for memory-efficient iteration without intermediate array allocation.
+**Action:** Always prefer `TActorRange<T>` for actor iteration when searching for specific actors in the world, unless an array of all matches is strictly required for later use. Requires `#include "EngineUtils.h"`.
