@@ -1,0 +1,3 @@
+## 2024-03-24 - [Avoid Unnecessary TArray Heap Allocations with TActorRange]
+**Learning:** `UGameplayStatics::GetAllActorsOfClass` internally creates a `TArray` resulting in heap allocations. In C++ controllers iterating over all actors, this impacts performance unnecessarily, especially if called multiple times or with many actors in the level.
+**Action:** Prefer using `TActorRange<T>(GetWorld())` (requires `#include "EngineUtils.h"`) over `GetAllActorsOfClass` to iterate directly over actors in the world without allocating a temporary array, avoiding GC overhead and memory fragmentation.
