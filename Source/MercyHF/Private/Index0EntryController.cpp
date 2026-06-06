@@ -9,6 +9,7 @@
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
 #include "MercyHelpers.h"
+#include "EngineUtils.h"
 
 AIndex0EntryController::AIndex0EntryController()
 {
@@ -85,10 +86,11 @@ void AIndex0EntryController::CacheEntryActors()
 
 	DebugMessage(TEXT("=== INDEX-0 ACTOR CACHING START ==="), FColor::White, 8.0f);
 
-	TArray<AActor*> AllActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
+	// ⚡ Bolt Performance Optimization:
+	// Replacing UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors)
+	// with TActorRange to avoid large TArray heap allocations when iterating over all actors.
 
-	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), AllActors.Num()), FColor::White, 6.0f);
+	int32 TotalActorsCount = 0;
 
 	// Track what we find for detailed reporting
 	int32 MainLightsByTag = 0, MainLightsByName = 0;
@@ -96,7 +98,7 @@ void AIndex0EntryController::CacheEntryActors()
 	int32 WarningTextsByTag = 0, WarningTextsByName = 0;
 	int32 PathRevealsByTag = 0, PathRevealsByName = 0;
 
-	for (AActor* Actor : AllActors)
+	for (AActor* Actor : TActorRange<AActor>(GetWorld()))
 	{
 		if (!Actor)
 		{
@@ -166,7 +168,11 @@ void AIndex0EntryController::CacheEntryActors()
 				DebugMessage(FString::Printf(TEXT("Path reveal found by NAME: %s"), *Actor->GetName()), FColor::Yellow, 6.0f);
 			}
 		}
+
+		TotalActorsCount++;
 	}
+
+	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), TotalActorsCount), FColor::White, 6.0f);
 
 	// Summary report
 	DebugMessage(FString::Printf(TEXT("MAIN LIGHTS: %d total (%d by tag, %d by name)"),

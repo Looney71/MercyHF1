@@ -5,6 +5,7 @@
 #include "MercyHelpers.h"
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
+#include "EngineUtils.h"
 
 AIndex3MovingWallsController::AIndex3MovingWallsController()
 {
@@ -43,12 +44,12 @@ void AIndex3MovingWallsController::CacheWallActors()
 
 	DebugMessage(TEXT("=== INDEX-3 WALL CACHING START ==="), FColor::White, 8.0f);
 
-	TArray<AActor*> AllActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
+	// ⚡ Bolt Performance Optimization:
+	// Replacing UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors)
+	// with TActorRange to avoid large TArray heap allocations when iterating over all actors.
+	int32 TotalActorsCount = 0;
 
-	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), AllActors.Num()), FColor::White, 6.0f);
-
-	for (AActor* Actor : AllActors)
+	for (AActor* Actor : TActorRange<AActor>(GetWorld()))
 	{
 		if (!Actor)
 		{
@@ -89,7 +90,11 @@ void AIndex3MovingWallsController::CacheWallActors()
 			PathLightActors.Add(Actor);
 			DebugMessage(FString::Printf(TEXT("Path light found: %s"), *Actor->GetName()), FColor::Green, 6.0f);
 		}
+
+		TotalActorsCount++;
 	}
+
+	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), TotalActorsCount), FColor::White, 6.0f);
 
 	// Summary report
 	DebugMessage(FString::Printf(TEXT("LEFT WALLS: %d found"), LeftWallActors.Num()), FColor::Cyan, 8.0f);
