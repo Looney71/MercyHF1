@@ -3,6 +3,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -200,11 +201,9 @@ void AMercyDoorController::CacheTargetDoor()
 		return;
 	}
 
-	TArray<AActor*> AllActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
-
-	for (AActor* Actor : AllActors)
+	for (TActorRange<AActor> ActorItr(GetWorld()); ActorItr; ++ActorItr)
 	{
+		AActor* Actor = *ActorItr;
 		if (!Actor || Actor == this)
 		{
 			continue;
