@@ -146,6 +146,8 @@
 		class="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30"
 		onclick={goPrev}
 		disabled={matches.length === 0}
+		aria-label={$t('previous_match')}
+		title={$t('previous_match')}
 	>
 		<Icon icon={ArrowUp01Icon} size={14} strokeWidth={2} />
 	</button>
@@ -153,12 +155,16 @@
 		class="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30"
 		onclick={goNext}
 		disabled={matches.length === 0}
+		aria-label={$t('next_match')}
+		title={$t('next_match')}
 	>
 		<Icon icon={ArrowDown01Icon} size={14} strokeWidth={2} />
 	</button>
 	<button
 		class="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground"
 		onclick={handleClose}
+		aria-label={$t('close')}
+		title={$t('close')}
 	>
 		<Icon icon={Cancel01Icon} size={14} strokeWidth={2} />
 	</button>
