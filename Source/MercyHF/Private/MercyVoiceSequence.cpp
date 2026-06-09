@@ -1,6 +1,7 @@
 #include "MercyVoiceSequence.h"
 
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercySystemTextActor.h"
 #include "Sound/SoundBase.h"
@@ -188,21 +189,30 @@ void AMercyVoiceSequence::PlayLineSound(const FMercyVoiceLine& Line, USoundBase*
 
 void AMercyVoiceSequence::ShowLineText(const FMercyVoiceLine& Line)
 {
-	TArray<AActor*> TextActors;
+	TArray<AMercySystemTextActor*> SystemTextActors;
 
 	if (!Line.TargetSystemTextTag.IsNone())
 	{
+		TArray<AActor*> TextActors;
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), Line.TargetSystemTextTag, TextActors);
+		for (AActor* Actor : TextActors)
+		{
+			if (AMercySystemTextActor* SystemTextActor = Cast<AMercySystemTextActor>(Actor))
+			{
+				SystemTextActors.Add(SystemTextActor);
+			}
+		}
 	}
 	else
 	{
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMercySystemTextActor::StaticClass(), TextActors);
+		for (AMercySystemTextActor* SystemTextActor : TActorRange<AMercySystemTextActor>(GetWorld()))
+		{
+			SystemTextActors.Add(SystemTextActor);
+		}
 	}
 
-	for (AActor* Actor : TextActors)
+	for (AMercySystemTextActor* SystemTextActor : SystemTextActors)
 	{
-		AMercySystemTextActor* SystemTextActor = Cast<AMercySystemTextActor>(Actor);
-
 		if (!SystemTextActor)
 		{
 			continue;
