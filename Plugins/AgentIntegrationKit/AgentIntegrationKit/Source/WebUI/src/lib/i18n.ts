@@ -94,6 +94,8 @@ const translations: Record<Locale, TranslationMap> = {
 		search_in_chat: 'Search in chat',
 		n_of_m_matches: (params) => `${params?.n || 0} of ${params?.m || 0}`,
 		no_matches: 'No matches',
+		previous_match: 'Previous match',
+		next_match: 'Next match',
 		retry_loading: 'Retry loading',
 		start_with: 'Start with',
 		setup_click: 'Click to set up',
