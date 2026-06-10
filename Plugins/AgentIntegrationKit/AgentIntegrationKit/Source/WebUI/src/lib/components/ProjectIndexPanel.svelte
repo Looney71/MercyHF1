@@ -544,6 +544,7 @@
 		<button
 			role="switch"
 			aria-checked={settings.autoIndex}
+			aria-label={$t('auto_index_heading')}
 			class="idx-toggle"
 			class:idx-toggle-on={settings.autoIndex}
 			onclick={toggleAutoIndex}
