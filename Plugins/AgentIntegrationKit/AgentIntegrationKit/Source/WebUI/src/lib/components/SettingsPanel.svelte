@@ -1100,6 +1100,7 @@
 							<button
 								role="switch"
 								aria-checked={$enterToSend}
+								aria-label="Toggle Enter to send"
 								class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors {$enterToSend ? 'bg-[var(--ue-accent)]' : 'bg-muted-foreground/30'}"
 								onclick={() => enterToSend.set(!$enterToSend)}
 							>
