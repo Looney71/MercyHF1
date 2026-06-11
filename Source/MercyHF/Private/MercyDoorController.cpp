@@ -3,6 +3,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -200,10 +201,9 @@ void AMercyDoorController::CacheTargetDoor()
 		return;
 	}
 
-	TArray<AActor*> AllActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
-
-	for (AActor* Actor : AllActors)
+	// PERFORMANCE OPTIMIZATION:
+	// Avoid unnecessary TArray heap allocations by using TActorRange instead of GetAllActorsOfClass
+	for (AActor* Actor : TActorRange<AActor>(GetWorld()))
 	{
 		if (!Actor || Actor == this)
 		{

@@ -1,0 +1,3 @@
+## 2023-10-25 - Use TActorRange Instead of GetAllActorsOfClass
+**Learning:** Found a performance bottleneck specific to Unreal Engine 5 projects. Using `UGameplayStatics::GetAllActorsOfClass` when we only need to iterate over the actors allocates a new `TArray` on the heap, which is an unnecessary overhead.
+**Action:** Use `TActorRange<T>(GetWorld())` inside a range-based for loop whenever an iteration over all actors of a specific class is required. Ensure `#include "EngineUtils.h"` is added. Do NOT use it for traditional loops requiring condition/increment logic since it acts as an iterator.
