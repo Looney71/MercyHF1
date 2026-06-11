@@ -1,6 +1,7 @@
 #include "MercyVoiceSequence.h"
 
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercySystemTextActor.h"
 #include "Sound/SoundBase.h"
@@ -188,24 +189,10 @@ void AMercyVoiceSequence::PlayLineSound(const FMercyVoiceLine& Line, USoundBase*
 
 void AMercyVoiceSequence::ShowLineText(const FMercyVoiceLine& Line)
 {
-	TArray<AActor*> TextActors;
-
-	if (!Line.TargetSystemTextTag.IsNone())
-	{
-		UGameplayStatics::GetAllActorsWithTag(GetWorld(), Line.TargetSystemTextTag, TextActors);
-	}
-	else
-	{
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMercySystemTextActor::StaticClass(), TextActors);
-	}
-
-	for (AActor* Actor : TextActors)
-	{
-		AMercySystemTextActor* SystemTextActor = Cast<AMercySystemTextActor>(Actor);
-
+	auto ProcessTextActor = [&Line](AMercySystemTextActor* SystemTextActor) {
 		if (!SystemTextActor)
 		{
-			continue;
+			return;
 		}
 
 		if (Line.bUseTypewriterText)
@@ -223,9 +210,27 @@ void AMercyVoiceSequence::ShowLineText(const FMercyVoiceLine& Line)
 				Line.AutoHideTextAfter
 			);
 		}
+	};
+
+	if (!Line.TargetSystemTextTag.IsNone())
+	{
+		TArray<AActor*> TextActors;
+		UGameplayStatics::GetAllActorsWithTag(GetWorld(), Line.TargetSystemTextTag, TextActors);
+		for (AActor* Actor : TextActors)
+		{
+			ProcessTextActor(Cast<AMercySystemTextActor>(Actor));
+		}
+	}
+	else
+	{
+		// PERFORMANCE OPTIMIZATION:
+		// Avoid unnecessary TArray heap allocations by using TActorRange instead of GetAllActorsOfClass
+		for (AMercySystemTextActor* SystemTextActor : TActorRange<AMercySystemTextActor>(GetWorld()))
+		{
+			ProcessTextActor(SystemTextActor);
+		}
 	}
 }
-
 void AMercyVoiceSequence::DebugMessage(const FString& Message, const FColor& Color, float Duration) const
 {
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);

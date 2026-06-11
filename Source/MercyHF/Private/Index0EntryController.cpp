@@ -4,6 +4,7 @@
 #include "Components/TextRenderComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercySystemTextActor.h"
 #include "Sound/SoundBase.h"
@@ -85,18 +86,15 @@ void AIndex0EntryController::CacheEntryActors()
 
 	DebugMessage(TEXT("=== INDEX-0 ACTOR CACHING START ==="), FColor::White, 8.0f);
 
-	TArray<AActor*> AllActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
-
-	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), AllActors.Num()), FColor::White, 6.0f);
-
 	// Track what we find for detailed reporting
 	int32 MainLightsByTag = 0, MainLightsByName = 0;
 	int32 RedLightsByTag = 0, RedLightsByName = 0;
 	int32 WarningTextsByTag = 0, WarningTextsByName = 0;
 	int32 PathRevealsByTag = 0, PathRevealsByName = 0;
 
-	for (AActor* Actor : AllActors)
+	// PERFORMANCE OPTIMIZATION:
+	// Avoid unnecessary TArray heap allocations by using TActorRange instead of GetAllActorsOfClass
+	for (AActor* Actor : TActorRange<AActor>(GetWorld()))
 	{
 		if (!Actor)
 		{
