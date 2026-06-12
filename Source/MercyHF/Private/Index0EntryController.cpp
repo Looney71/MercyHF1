@@ -4,6 +4,7 @@
 #include "Components/TextRenderComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercySystemTextActor.h"
 #include "Sound/SoundBase.h"
@@ -85,19 +86,20 @@ void AIndex0EntryController::CacheEntryActors()
 
 	DebugMessage(TEXT("=== INDEX-0 ACTOR CACHING START ==="), FColor::White, 8.0f);
 
-	TArray<AActor*> AllActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), AllActors);
-
-	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), AllActors.Num()), FColor::White, 6.0f);
-
 	// Track what we find for detailed reporting
 	int32 MainLightsByTag = 0, MainLightsByName = 0;
 	int32 RedLightsByTag = 0, RedLightsByName = 0;
 	int32 WarningTextsByTag = 0, WarningTextsByName = 0;
 	int32 PathRevealsByTag = 0, PathRevealsByName = 0;
 
-	for (AActor* Actor : AllActors)
+	int32 TotalActorsTraversed = 0;
+
+	// ⚡ Bolt: Optimize caching by replacing UGameplayStatics::GetAllActorsOfClass with TActorRange
+	// TActorRange avoids generating a heap-allocated TArray and immediately starts iterating over World actors.
+	for (AActor* Actor : TActorRange<AActor>(GetWorld()))
 	{
+		TotalActorsTraversed++;
+
 		if (!Actor)
 		{
 			continue;
@@ -167,6 +169,8 @@ void AIndex0EntryController::CacheEntryActors()
 			}
 		}
 	}
+
+	DebugMessage(FString::Printf(TEXT("Total actors in level: %d"), TotalActorsTraversed), FColor::White, 6.0f);
 
 	// Summary report
 	DebugMessage(FString::Printf(TEXT("MAIN LIGHTS: %d total (%d by tag, %d by name)"),
