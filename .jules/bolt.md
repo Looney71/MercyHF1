@@ -1,0 +1,3 @@
+## 2025-06-14 - Replace GetAllActorsOfClass with TActorRange
+**Learning:** `UGameplayStatics::GetAllActorsOfClass` executes unnecessary TArray heap allocations, which is problematic for performance in Unreal Engine C++ controllers querying all actors frequently (e.g., during BeginPlay caching phases). `TActorRange<T>` avoids these heap allocations entirely by iterating natively over actors in the world.
+**Action:** When querying for actors in range-based for loops without needing array-specific operations (like `.Num()`), strictly use `TActorRange<T>(GetWorld())` and include `"EngineUtils.h"` to improve performance and avoid heap overhead.

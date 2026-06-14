@@ -3,6 +3,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercyProtocolComponent.h"
@@ -138,24 +139,29 @@ void AMercyDeathVolume::RespawnActor(AActor* VictimActor)
 
 void AMercyDeathVolume::ShowDeathText()
 {
-	TArray<AActor*> TextActors;
-
 	if (!SystemTextTag.IsNone())
 	{
+		TArray<AActor*> TextActors;
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), SystemTextTag, TextActors);
+
+		for (AActor* Actor : TextActors)
+		{
+			AMercySystemTextActor* SystemTextActor = Cast<AMercySystemTextActor>(Actor);
+
+			if (SystemTextActor)
+			{
+				SystemTextActor->ShowTypewriterMessage(DeathMessage, 0.035f, 5.0f);
+			}
+		}
 	}
 	else
 	{
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMercySystemTextActor::StaticClass(), TextActors);
-	}
-
-	for (AActor* Actor : TextActors)
-	{
-		AMercySystemTextActor* SystemTextActor = Cast<AMercySystemTextActor>(Actor);
-
-		if (SystemTextActor)
+		for (AMercySystemTextActor* SystemTextActor : TActorRange<AMercySystemTextActor>(GetWorld()))
 		{
-			SystemTextActor->ShowTypewriterMessage(DeathMessage, 0.035f, 5.0f);
+			if (SystemTextActor)
+			{
+				SystemTextActor->ShowTypewriterMessage(DeathMessage, 0.035f, 5.0f);
+			}
 		}
 	}
 }
