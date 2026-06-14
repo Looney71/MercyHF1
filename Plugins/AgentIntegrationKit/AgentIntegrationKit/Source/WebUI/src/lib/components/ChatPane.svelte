@@ -801,7 +801,6 @@
 								rows={1}
 								spellcheck="false"
 								autocomplete="off"
-								autocorrect="off"
 								class="w-full resize-none bg-transparent px-4 pt-3.5 pb-3 text-[14px] leading-normal text-foreground placeholder:text-muted-foreground/60 focus:outline-none disabled:opacity-50"
 								onkeydown={handleKeydown}
 								onkeyup={handleKeyup}
