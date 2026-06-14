@@ -1,6 +1,7 @@
 #include "MercyVoiceSequence.h"
 
 #include "Engine/Engine.h"
+#include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercySystemTextActor.h"
 #include "Sound/SoundBase.h"
@@ -188,40 +189,61 @@ void AMercyVoiceSequence::PlayLineSound(const FMercyVoiceLine& Line, USoundBase*
 
 void AMercyVoiceSequence::ShowLineText(const FMercyVoiceLine& Line)
 {
-	TArray<AActor*> TextActors;
-
 	if (!Line.TargetSystemTextTag.IsNone())
 	{
+		TArray<AActor*> TextActors;
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), Line.TargetSystemTextTag, TextActors);
+
+		for (AActor* Actor : TextActors)
+		{
+			AMercySystemTextActor* SystemTextActor = Cast<AMercySystemTextActor>(Actor);
+
+			if (!SystemTextActor)
+			{
+				continue;
+			}
+
+			if (Line.bUseTypewriterText)
+			{
+				SystemTextActor->ShowTypewriterMessage(
+					Line.Message,
+					Line.TypewriterInterval,
+					Line.AutoHideTextAfter
+				);
+			}
+			else
+			{
+				SystemTextActor->ShowInstantMessage(
+					Line.Message,
+					Line.AutoHideTextAfter
+				);
+			}
+		}
 	}
 	else
 	{
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMercySystemTextActor::StaticClass(), TextActors);
-	}
-
-	for (AActor* Actor : TextActors)
-	{
-		AMercySystemTextActor* SystemTextActor = Cast<AMercySystemTextActor>(Actor);
-
-		if (!SystemTextActor)
+		for (AMercySystemTextActor* SystemTextActor : TActorRange<AMercySystemTextActor>(GetWorld()))
 		{
-			continue;
-		}
+			if (!SystemTextActor)
+			{
+				continue;
+			}
 
-		if (Line.bUseTypewriterText)
-		{
-			SystemTextActor->ShowTypewriterMessage(
-				Line.Message,
-				Line.TypewriterInterval,
-				Line.AutoHideTextAfter
-			);
-		}
-		else
-		{
-			SystemTextActor->ShowInstantMessage(
-				Line.Message,
-				Line.AutoHideTextAfter
-			);
+			if (Line.bUseTypewriterText)
+			{
+				SystemTextActor->ShowTypewriterMessage(
+					Line.Message,
+					Line.TypewriterInterval,
+					Line.AutoHideTextAfter
+				);
+			}
+			else
+			{
+				SystemTextActor->ShowInstantMessage(
+					Line.Message,
+					Line.AutoHideTextAfter
+				);
+			}
 		}
 	}
 }

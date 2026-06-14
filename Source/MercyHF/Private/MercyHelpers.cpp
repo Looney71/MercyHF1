@@ -3,6 +3,7 @@
 #include "Components/LightComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "MercySystemTextActor.h"
@@ -94,24 +95,29 @@ void UMercyHelpers::ShowSystemTextByTag(
 		return;
 	}
 
-	TArray<AActor*> TextActors;
-
 	if (!Tag.IsNone())
 	{
+		TArray<AActor*> TextActors;
 		UGameplayStatics::GetAllActorsWithTag(World, Tag, TextActors);
+
+		for (AActor* Actor : TextActors)
+		{
+			AMercySystemTextActor* TextActor = Cast<AMercySystemTextActor>(Actor);
+
+			if (TextActor)
+			{
+				TextActor->ShowTypewriterMessage(Message, CharacterIntervalSeconds, AutoHideAfterSeconds);
+			}
+		}
 	}
 	else
 	{
-		UGameplayStatics::GetAllActorsOfClass(World, AMercySystemTextActor::StaticClass(), TextActors);
-	}
-
-	for (AActor* Actor : TextActors)
-	{
-		AMercySystemTextActor* TextActor = Cast<AMercySystemTextActor>(Actor);
-
-		if (TextActor)
+		for (AMercySystemTextActor* TextActor : TActorRange<AMercySystemTextActor>(World))
 		{
-			TextActor->ShowTypewriterMessage(Message, CharacterIntervalSeconds, AutoHideAfterSeconds);
+			if (TextActor)
+			{
+				TextActor->ShowTypewriterMessage(Message, CharacterIntervalSeconds, AutoHideAfterSeconds);
+			}
 		}
 	}
 }
